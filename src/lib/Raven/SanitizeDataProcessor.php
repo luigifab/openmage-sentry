@@ -1,44 +1,48 @@
 <?php
 /**
- * Asterisk out passwords from password fields in frames, http,
- * and basic extra data.
+ * This file is part of Raven.
  *
- * @package raven
+ * (c) Sentry Team
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code (BSD-3-Clause).
  */
-class Raven_SanitizeDataProcessor extends Raven_Processor
-{
-    const MASK = '********';
-    const FIELDS_RE = '/(authorization|password|passwd|secret)/i';
-    const VALUES_RE = '/^\d{16}$/';
 
-    function apply($value, $fn, $key=null) {
-        if (is_array($value)) {
-            foreach ($value as $k=>$v) {
-                $value[$k] = $this->apply($v, $fn, $k);
-            }
-            return $value;
-        }
-        return call_user_func($fn, $key, $value);
-    }
+class Raven_SanitizeDataProcessor extends Raven_Processor {
 
-    function sanitize($key, $value)
-    {
-        if (empty($value)) {
-            return $value;
-        }
+	// Asterisk out passwords from password fields in frames, http, and basic extra data.
+	public const MASK = '********';
+	public const FIELDS_RE = '/(authorization|password|passwd|secret)/i';
+	public const VALUES_RE = '/^\d{16}$/';
 
-        if (preg_match(self::VALUES_RE, $value)) {
-            return self::MASK;
-        }
+	public function apply($value, $fn, $key = null) {
 
-        if (preg_match(self::FIELDS_RE, $key)) {
-            return self::MASK;
-        }
+		if (is_array($value)) {
 
-        return $value;
-    }
+			foreach ($value as $k => $v)
+				$value[$k] = $this->apply($v, $fn, $k);
 
-    function process($data) {
-        return $this->apply($data, array($this, 'sanitize'));
-    }
+			return $value;
+		}
+
+		return $fn($key, $value);
+	}
+
+	public function sanitize($key, $value) {
+
+		if (empty($value))
+			return $value;
+
+		if (preg_match(self::VALUES_RE, $value))
+			return self::MASK;
+
+		if (preg_match(self::FIELDS_RE, $key))
+			return self::MASK;
+
+		return $value;
+	}
+
+	public function process($data) {
+		return $this->apply($data, [$this, 'sanitize']);
+	}
 }

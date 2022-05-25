@@ -1,21 +1,11 @@
-# magento-amg-sentry-extension
+# sentry
 
-The `magento-amg-sentry-extension` is a Magento 1.5 extension for Sentry interface.
+This is a fork. Work in progress.
 
-This plugin is based on Raven client library [raven-php](https://github.com/getsentry/raven-php).
+To install, run:
+```bash
+composer require "luigifab/openmage-sentry":"dev-master" [--ignore-platform-reqs]
+```
 
-## Requirements
-
-* PHP >= 5.2
-* Magento >= 1.5
-* Sentry instance
-
-## Installation (via zip archive)
-
-[Download](https://github.com/amg-dev/magento-amg-sentry-extension/archive/master.zip) and extract zip archive.
-
-Copy the content of `src` folder into your Magento project folder.
-
-### Configuration
-
-In your Magento back-office, go to System → Configuration → Advanced → Developer → AMG Sentry.
+- Compatibility: OpenMage 19.x / 20.x / 21.x, PHP 7.2 / 7.3 / 7.4 / 8.0 / 8.1
+- License: OSL 3.0

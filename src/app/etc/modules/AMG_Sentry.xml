@@ -1,26 +1,25 @@
-<?xml version="1.0" ?>
-<!-- 
- 
- AMG Sentry
-
- NOTICE OF LICENSE
-
- This source file is subject to the Open Software License (OSL 3.0)
- that is bundled with this package in the file LICENSE.txt.
- It is also available through the world-wide-web at this URL:
- http://opensource.org/licenses/osl-3.0.php
-
- @category		AMG
- @package		AMG_Sentry
- @copyright		Copyright © 2012 Jean Roussel <contact@jean-roussel.fr>
- @license		http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
- 
+<?xml version="1.0"?>
+<!--
+ * AMG Sentry
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * https://opensource.org/licenses/osl-3.0.php
+ *
+ * @category      AMG
+ * @package       AMG_Sentry
+ * @copyright     Copyright © 2012 Jean Roussel <contact@jean-roussel.fr>
+ * @license       https://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
 -->
+
 <config>
 	<modules>
 		<AMG_Sentry>
 			<active>true</active>
 			<codePool>community</codePool>
+			<!-- see https://www.luigifab.fr/openmage/modules for more information -->
+			<update>https://raw.githubusercontent.com/luigifab/openmage-sentry/master/src/app/code/community/AMG/Sentry/etc/config.xml</update>
 		</AMG_Sentry>
 	</modules>
 </config>

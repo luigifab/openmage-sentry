@@ -1,49 +1,60 @@
 <?php
+/**
+ * AMG Sentry
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * https://opensource.org/licenses/osl-3.0.php
+ *
+ * @category      AMG
+ * @package       AMG_Sentry
+ * @copyright     Copyright © 2012 Jean Roussel <contact@jean-roussel.fr>
+ * @license       https://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
-$ravenDir = Mage::getBaseDir() . DS . 'lib' . DS . 'Raven';
-require_once($ravenDir . DS . 'Autoloader.php');
+require_once(Mage::getBaseDir('lib').'/Raven/Autoloader.php');
 Raven_Autoloader::register();
-//require_once($ravenDir . DS . 'Compat.php');
-//require_once($ravenDir . DS . 'ErrorHandler.php');
-//require_once($ravenDir . DS . 'Stacktrace.php');
 
 class AMG_Sentry_Model_Client extends Raven_Client {
 
-	static protected $_logger = null;
+	protected static $_logger;
 
-    function __construct() {
-        parent::__construct(Mage::getStoreConfig('dev/amg-sentry/dsn'));
-    }
+	public function __construct() {
 
-	/**
-	* Send a message to Sentry.
-	*
-	* @param string $title Message title
-	* @param string $description Message description
-	* @param string $level Message level
-	*
-	* @return integer Sentry event ID 
-	*/
-	public function sendMessage($title, $description = '', $level = self::INFO){
-		return $this->captureMessage($title, array('description' => $description), $level);
+		$data = [];
+		$data['tags']['runtime'] = 'PHP '.PHP_VERSION;
+
+		parent::__construct(Mage::getStoreConfig('dev/amg-sentry/dsn'), $data);
 	}
 
 	/**
-	* Send an exception to Sentry.
-	*
-	* @param Exception $exception Exception
-	* @param string $description Exception description
-	*
-	* @return integer Sentry event ID 
-	*/
-	public function sendException($exception, $description = ''){
+	 * Send a message to Sentry.
+	 *
+	 * @param string $title Message title
+	 * @param string $description Message description
+	 * @param string $level Message level
+	 * @return array|string|string[] Sentry event ID
+	 */
+	public function sendMessage(string $title, string $description = '', string $level = self::INFO) {
+		return $this->captureMessage($title, ['description' => $description], $level);
+	}
+
+	/**
+	 * Send an exception to Sentry.
+	 *
+	 * @param Exception $exception Exception
+	 * @param string $description Exception description
+	 * @return array|string|string[] Sentry event ID
+	 */
+	public function sendException(Exception $exception, string $description = '') {
 		return $this->captureException($exception, $description);
 	}
 
 	/**
-    * Log a message to sentry
-    */
-	public function capture($data, $stack){
+	 * Log a message to sentry
+	 */
+	public function capture($data, $stack) {
 		if (!Mage::getStoreConfigFlag('dev/amg-sentry/active')) {
 			return true;
 		}
@@ -53,11 +64,11 @@ class AMG_Sentry_Model_Client extends Raven_Client {
 			unset($data['sentry.interfaces.Message']['params']['description']);
 		}
 		if (!empty($data['sentry.interfaces.Exception']['value'])) {
-			$data['message'] = $data['culprit'];
+			$data['message'] = $data['culprit'] ?? 'n/a';
 			$data['culprit'] = $data['sentry.interfaces.Exception']['value'];
 		}
 		if (!isset($data['logger'])) {
-			if (null !== self::$_logger) {
+			if (self::$_logger !== null) {
 				$data['logger'] = self::$_logger;
 			} else {
 				$data['logger'] = Mage::getStoreConfig('dev/amg-sentry/logger');
@@ -67,18 +78,16 @@ class AMG_Sentry_Model_Client extends Raven_Client {
 	}
 
 	/**
-	* Set Sentry logger.
-	*
-	* @param string $logger Logger
-	*/
-	public function setLogger($logger){
+	 * Set Sentry logger
+	 */
+	public function setLogger(string $logger) {
 		$this->_logger = $logger;
 	}
+
 	/**
-	* Reset Sentry logger.
-	*/
-	public function resetLogger(){
+	 * Reset Sentry logger
+	 */
+	public function resetLogger() {
 		$this->_logger = null;
 	}
-
 }
