@@ -24,7 +24,7 @@ class Raven_Stacktrace {
 				if (isset($frame['args']))
 					$args = is_string($frame['args']) ? $frame['args'] : @json_encode($frame['args']);
 				else
-					$args = [];
+					$args = 'n/a';
 
 				if (isset($frame['class']))
 					$context['line'] = sprintf('%s%s%s(%s)', $frame['class'], $frame['type'], $frame['function'], $args);
