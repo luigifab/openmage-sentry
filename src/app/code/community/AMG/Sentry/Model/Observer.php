@@ -31,7 +31,7 @@ class AMG_Sentry_Model_Observer {
 	}
 }
 
-function sentry_error_handler(int $errno, string $errstr, string $errfile, int $errline) {
+function sentry_error_handler($errno, $errstr, $errfile, $errline) {
 
 	if ((error_reporting() != 0) || Mage::getStoreConfigFlag('dev/amg-sentry/ignore-error-control-operator'))
 		Mage::getSingleton('amg-sentry/client')->sendMessage($errstr, sprintf('In %s on line %d', $errfile, $errline));

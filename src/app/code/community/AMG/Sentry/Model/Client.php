@@ -34,9 +34,9 @@ class AMG_Sentry_Model_Client extends Raven_Client {
 	 * @param string $title Message title
 	 * @param string $description Message description
 	 * @param string $level Message level
-	 * @return array|string|string[] Sentry event ID
+	 * @return array|string Sentry event ID
 	 */
-	public function sendMessage(string $title, string $description = '', string $level = self::INFO) {
+	public function sendMessage($title, $description = '', $level = self::INFO) {
 		return $this->captureMessage($title, ['description' => $description], $level);
 	}
 
@@ -45,9 +45,9 @@ class AMG_Sentry_Model_Client extends Raven_Client {
 	 *
 	 * @param Exception $exception Exception
 	 * @param string $description Exception description
-	 * @return array|string|string[] Sentry event ID
+	 * @return array|string Sentry event ID
 	 */
-	public function sendException(Exception $exception, string $description = '') {
+	public function sendException($exception, $description = '') {
 		return $this->captureException($exception, $description);
 	}
 
@@ -80,7 +80,7 @@ class AMG_Sentry_Model_Client extends Raven_Client {
 	/**
 	 * Set Sentry logger
 	 */
-	public function setLogger(string $logger) {
+	public function setLogger($logger) {
 		$this->_logger = $logger;
 	}
 

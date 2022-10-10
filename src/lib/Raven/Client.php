@@ -25,21 +25,21 @@ class Raven_Client {
 			$options_or_dsn = $_SERVER['SENTRY_DSN'];
 		}
 		if (!is_array($options_or_dsn)) {
-			if (!empty($options_or_dsn))
-				$options_or_dsn = self::parseDSN($options_or_dsn); // Must be a valid DSN
-			else
+			if (empty($options_or_dsn))
 				$options_or_dsn = [];
+			else
+				$options_or_dsn = self::parseDSN($options_or_dsn);
 		}
 		$options = array_merge($options_or_dsn, $options);
 
-		$this->servers    = empty($options['servers']) ? null : $options['servers'];
-		$this->secret_key = empty($options['secret_key']) ? null : $options['secret_key'];
-		$this->public_key = empty($options['public_key']) ? null : $options['public_key'];
-		$this->project    = $options['project'] ?? 1;
+		$this->servers         = empty($options['servers']) ? null : $options['servers'];
+		$this->secret_key      = empty($options['secret_key']) ? null : $options['secret_key'];
+		$this->public_key      = empty($options['public_key']) ? null : $options['public_key'];
+		$this->project         = $options['project'] ?? 1;
 		$this->auto_log_stacks = $options['auto_log_stacks'] ?? false;
-		$this->name = empty($options['name']) ? gethostname() : $options['name'];
-		$this->site = empty($options['site']) ? $this->getServerVariable('SERVER_NAME') : $options['site'];
-		$this->tags = empty($options['tags']) ? [] : $options['tags'];
+		$this->name            = empty($options['name']) ? gethostname() : $options['name'];
+		$this->site            = empty($options['site']) ? $this->getServerVariable('SERVER_NAME') : $options['site'];
+		$this->tags            = empty($options['tags']) ? [] : $options['tags'];
 
 		$this->processors = [];
 		foreach (($options['processors'] ?? static::getDefaultProcessors()) as $processor)
@@ -57,13 +57,17 @@ class Raven_Client {
 	public static function parseDSN($dsn) {
 
 		$url = parse_url($dsn);
-		$scheme = ($url['scheme'] ?? '');
+		if (!is_array($url))
+			throw new InvalidArgumentException('Unsupported Sentry DSN: '.$dsn);
+
+		$scheme = $url['scheme'] ?? '';
 		if (!in_array($scheme, ['http', 'https', 'udp']))
 			throw new InvalidArgumentException('Unsupported Sentry DSN scheme: '.$scheme);
 
-		$netloc = ($url['host'] ?? null);
-		$netloc.= (isset($url['port']) ? ':'.$url['port'] : null);
-		$rawpath = ($url['path'] ?? null);
+		$netloc  = $url['host'] ?? null;
+		$netloc .= isset($url['port']) ? ':'.$url['port'] : null;
+
+		$rawpath = $url['path'] ?? null;
 		if ($rawpath) {
 			$pos = strrpos($rawpath, '/', 1);
 			if ($pos !== false) {
@@ -80,8 +84,9 @@ class Raven_Client {
 			$path = '';
 		}
 
-		$username = ($url['user'] ?? null);
-		$password = ($url['pass'] ?? null);
+		$username = $url['user'] ?? null;
+		$password = $url['pass'] ?? null;
+
 		if (empty($netloc) || empty($project) || empty($username))
 			throw new InvalidArgumentException('Invalid Sentry DSN: '.$dsn);
 
@@ -236,6 +241,8 @@ class Raven_Client {
 		$parts = parse_url($url);
 		$parts['netloc'] = $parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : null);
 
+		// PHP 8.0+ for $parts
+		// Value should be one of: "scheme", "host", "port", "user", "pass", "query", "path", "fragment"
 		if ($parts['scheme'] === 'udp')
 			return $this->sendUdp($parts['netloc'], $data, $headers['X-Sentry-Auth']);
 
@@ -266,7 +273,7 @@ class Raven_Client {
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
 		curl_setopt($curl, CURLOPT_VERBOSE, false);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true); // false?
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // yes
 		$ret = curl_exec($curl);
 		$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		$success = ($code == 200);
@@ -280,13 +287,13 @@ class Raven_Client {
 	}
 
 	private function getSignature($message, $timestamp, $key) {
-		return hash_hmac('sha1', sprintf('%F', $timestamp) .' '. $message, $key);
+		return hash_hmac('sha1', sprintf('%F', $timestamp).' '.$message, $key);
 	}
 
 	private function getAuthHeader($signature, $timestamp, $client, $api_key = null) {
 
 		$header = [
-			sprintf("sentry_timestamp=%F", $timestamp),
+			sprintf('sentry_timestamp=%F', $timestamp),
 			'sentry_signature='.$signature,
 			'sentry_client='.$client,
 			'sentry_version=2.0',
