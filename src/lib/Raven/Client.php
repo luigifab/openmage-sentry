@@ -10,7 +10,7 @@
 
 class Raven_Client {
 
-	public const VERSION = '0.1.0';
+	public const VERSION = '0.2.0'; // PHP 8.0-8.2
 	public const DEBUG   = 'debug';
 	public const INFO    = 'info';
 	public const WARN    = 'warning';
@@ -18,34 +18,43 @@ class Raven_Client {
 	public const ERROR   = 'error';
 	public const FATAL   = 'fatal';
 
-	public function __construct($options_or_dsn = null, $options = []) {
+	private $_servers;
+	private $_secretKey;
+	private $_publicKey;
+	private $_project;
+	private $_autoLogStacks;
+	private $_name;
+	private $_site;
+	private $_tags;
+	private $_processors;
+	private $_lastError;
 
-		if (is_null($options_or_dsn) && !empty($_SERVER['SENTRY_DSN'])) {
+	public function __construct($optionsOrDsn = null, $options = []) {
+
+		if (is_null($optionsOrDsn) && !empty($_SERVER['SENTRY_DSN'])) {
 			// Read from environment
-			$options_or_dsn = $_SERVER['SENTRY_DSN'];
+			$optionsOrDsn = $_SERVER['SENTRY_DSN'];
 		}
-		if (!is_array($options_or_dsn)) {
-			if (empty($options_or_dsn))
-				$options_or_dsn = [];
+		if (!is_array($optionsOrDsn)) {
+			if (empty($optionsOrDsn))
+				$optionsOrDsn = [];
 			else
-				$options_or_dsn = self::parseDSN($options_or_dsn);
+				$optionsOrDsn = static::parseDSN($optionsOrDsn);
 		}
-		$options = array_merge($options_or_dsn, $options);
+		$options = array_merge($optionsOrDsn, $options);
 
-		$this->servers         = empty($options['servers']) ? null : $options['servers'];
-		$this->secret_key      = empty($options['secret_key']) ? null : $options['secret_key'];
-		$this->public_key      = empty($options['public_key']) ? null : $options['public_key'];
-		$this->project         = $options['project'] ?? 1;
-		$this->auto_log_stacks = $options['auto_log_stacks'] ?? false;
-		$this->name            = empty($options['name']) ? gethostname() : $options['name'];
-		$this->site            = empty($options['site']) ? $this->getServerVariable('SERVER_NAME') : $options['site'];
-		$this->tags            = empty($options['tags']) ? [] : $options['tags'];
+		$this->_servers       = empty($options['servers']) ? null : $options['servers'];
+		$this->_secretKey     = empty($options['secret_key']) ? null : $options['secret_key'];
+		$this->_publicKey     = empty($options['public_key']) ? null : $options['public_key'];
+		$this->_project       = $options['project'] ?? 1;
+		$this->_autoLogStacks = $options['auto_log_stacks'] ?? false;
+		$this->_name          = empty($options['name']) ? gethostname() : $options['name'];
+		$this->_site          = empty($options['site']) ? $this->getServerVariable('SERVER_NAME') : $options['site'];
+		$this->_tags          = empty($options['tags']) ? [] : $options['tags'];
 
-		$this->processors = [];
+		$this->_processors = [];
 		foreach (($options['processors'] ?? static::getDefaultProcessors()) as $processor)
-			$this->processors[] = new $processor($this);
-
-		$this->_lasterror = null;
+			$this->_processors[] = new $processor($this);
 	}
 
 	public static function getDefaultProcessors() {
@@ -165,10 +174,10 @@ class Raven_Client {
 			$headers = getallheaders();
 
 		$data = array_merge($data, [
-			'server_name' => $this->name,
+			'server_name' => $this->_name,
 			'event_id'    => $event_id,
-			'project'     => $this->project,
-			'site'        => $this->site,
+			'project'     => $this->_project,
+			'site'        => $this->_site,
 			'sentry.interfaces.Http' => [
 				'method'       => $this->getServerVariable('REQUEST_METHOD'),
 				'url'          => $this->getCurrentUrl(),
@@ -180,7 +189,7 @@ class Raven_Client {
 			],
 		]);
 
-		if ((!$stack && $this->auto_log_stacks) || $stack === True) {
+		if ((!$stack && $this->_autoLogStacks) || ($stack === true)) {
 			$stack = debug_backtrace();
 			// Drop last stack
 			array_shift($stack);
@@ -203,7 +212,7 @@ class Raven_Client {
 		$data = $this->removeInvalidUtf8($data);
 
 		// TODO: allow tags to be specified per event
-		$data['tags'] = $this->tags;
+		$data['tags'] = $this->_tags;
 
 		// sanitize data and send
 		$this->send($this->process($data));
@@ -212,7 +221,7 @@ class Raven_Client {
 	}
 
 	public function process($data) {
-		foreach ($this->processors as $processor)
+		foreach ($this->_processors as $processor)
 			$data = $processor->process($data);
 		return $data;
 	}
@@ -221,13 +230,13 @@ class Raven_Client {
 
 		$message = base64_encode(gzcompress(json_encode($data)));
 
-		foreach ($this->servers as $url) {
-			$client_string = 'raven-php/'.self::VERSION;
+		foreach ($this->_servers as $url) {
+			$client    = 'raven-php/'.self::VERSION;
 			$timestamp = microtime(true);
-			$signature = $this->getSignature($message, $timestamp, $this->secret_key);
+			$signature = $this->getSignature($message, $timestamp, $this->_secretKey);
 			$headers = [
-				'User-Agent'    => $client_string,
-				'X-Sentry-Auth' => $this->getAuthHeader($signature, $timestamp, $client_string, $this->public_key),
+				'User-Agent'    => $client,
+				'X-Sentry-Auth' => $this->getAuthHeader($signature, $timestamp, $client, $this->_publicKey),
 				'Content-Type'  => 'application/octet-stream',
 			];
 			$result = $this->sendRemote($url, $message, $headers);
@@ -243,7 +252,7 @@ class Raven_Client {
 
 		// PHP 8.0+ for $parts
 		// Value should be one of: "scheme", "host", "port", "user", "pass", "query", "path", "fragment"
-		if ($parts['scheme'] === 'udp')
+		if ($parts['scheme'] == 'udp')
 			return $this->sendUdp($parts['netloc'], $data, $headers['X-Sentry-Auth']);
 
 		return $this->sendHttp($url, $data, $headers);
@@ -252,10 +261,10 @@ class Raven_Client {
 	private function sendUdp($netloc, $data, $headers) {
 
 		[$host, $port] = explode(':', $netloc);
-		$raw_data = $headers."\n\n".$data;
+		$rawData = $headers."\n\n".$data;
 
 		$sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-		socket_sendto($sock, $raw_data, strlen($raw_data), 0, $host, $port);
+		socket_sendto($sock, $rawData, strlen($rawData), 0, $host, $port);
 		socket_close($sock);
 
 		return true;
@@ -263,13 +272,13 @@ class Raven_Client {
 
 	private function sendHttp($url, $data, $headers = []) {
 
-		$new_headers = [];
+		$newHeaders = [];
 		foreach ($headers as $key => $value)
-			$new_headers[] = $key.': '.$value;
+			$newHeaders[] = $key.': '.$value;
 
 		$curl = curl_init($url);
 		curl_setopt($curl, CURLOPT_POST, 1);
-		curl_setopt($curl, CURLOPT_HTTPHEADER, $new_headers);
+		curl_setopt($curl, CURLOPT_HTTPHEADER, $newHeaders);
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
 		curl_setopt($curl, CURLOPT_VERBOSE, false);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -281,7 +290,7 @@ class Raven_Client {
 
 		// It'd be nice just to raise an exception here, but it's very PHP-like
 		if (!$success)
-			$this->_lasterror = $ret;
+			$this->_lastError = $ret;
 
 		return $success;
 	}
@@ -356,6 +365,6 @@ class Raven_Client {
 	}
 
 	public function getLastError() {
-		return $this->_lasterror;
+		return $this->_lastError;
 	}
 }

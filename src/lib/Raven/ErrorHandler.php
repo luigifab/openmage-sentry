@@ -10,6 +10,7 @@
 
 class Raven_ErrorHandler {
 
+	private $client;
 	private $oldExceptionHandler;
 	private $callExistingExceptionHandler = false;
 	private $oldErrorHandler;

@@ -10,6 +10,8 @@
 
 class Raven_Processor {
 
+	private $client;
+
 	public function __construct($client) {
 		$this->client = $client;
 	}
