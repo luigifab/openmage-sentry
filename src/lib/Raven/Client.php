@@ -10,14 +10,6 @@
 
 class Raven_Client {
 
-	public const VERSION = '0.2.0'; // PHP 8.0-8.2
-	public const DEBUG   = 'debug';
-	public const INFO    = 'info';
-	public const WARN    = 'warning';
-	public const WARNING = 'warning';
-	public const ERROR   = 'error';
-	public const FATAL   = 'fatal';
-
 	private $_servers;
 	private $_secretKey;
 	private $_publicKey;
@@ -26,8 +18,16 @@ class Raven_Client {
 	private $_name;
 	private $_site;
 	private $_tags;
-	private $_processors;
 	private $_lastError;
+
+	// Raven_Client
+	public const VERSION = '0.2.0'; // PHP 8.0-8.2
+	public const DEBUG   = 'debug';
+	public const INFO    = 'info';
+	public const WARN    = 'warning';
+	public const WARNING = 'warning';
+	public const ERROR   = 'error';
+	public const FATAL   = 'fatal';
 
 	public function __construct($optionsOrDsn = null, $options = []) {
 
@@ -39,7 +39,7 @@ class Raven_Client {
 			if (empty($optionsOrDsn))
 				$optionsOrDsn = [];
 			else
-				$optionsOrDsn = static::parseDSN($optionsOrDsn);
+				$optionsOrDsn = $this->parseDSN($optionsOrDsn);
 		}
 		$options = array_merge($optionsOrDsn, $options);
 
@@ -51,19 +51,9 @@ class Raven_Client {
 		$this->_name          = empty($options['name']) ? gethostname() : $options['name'];
 		$this->_site          = empty($options['site']) ? $this->getServerVariable('SERVER_NAME') : $options['site'];
 		$this->_tags          = empty($options['tags']) ? [] : $options['tags'];
-
-		$this->_processors = [];
-		foreach (($options['processors'] ?? static::getDefaultProcessors()) as $processor)
-			$this->_processors[] = new $processor($this);
 	}
 
-	public static function getDefaultProcessors() {
-		return [
-			'Raven_SanitizeDataProcessor',
-		];
-	}
-
-	public static function parseDSN($dsn) {
+	public function parseDSN($dsn) {
 
 		$url = parse_url($dsn);
 		if (!is_array($url))
@@ -160,7 +150,7 @@ class Raven_Client {
 
 	public function capture($data, $stack) {
 
-		$event_id = $this->uuid4();
+		$event_id = $this->getUuid4();
 
 		if (!isset($data['timestamp']))
 			$data['timestamp'] = gmdate('Y-m-d\TH:i:s\Z');
@@ -206,7 +196,7 @@ class Raven_Client {
 			$stack[count($stack) - 1]['function'] = null;
 
 			if (!isset($data['sentry.interfaces.Stacktrace']))
-				$data['sentry.interfaces.Stacktrace'] = ['frames' => Raven_Stacktrace::get_stack_info($stack)];
+				$data['sentry.interfaces.Stacktrace'] = ['frames' => $this->getStackInfo($stack)];
 		}
 
 		$data = $this->removeInvalidUtf8($data);
@@ -221,9 +211,7 @@ class Raven_Client {
 	}
 
 	public function process($data) {
-		foreach ($this->_processors as $processor)
-			$data = $processor->process($data);
-		return $data;
+		return $this->apply($data, [$this, 'sanitize']);
 	}
 
 	public function send($data) {
@@ -314,7 +302,7 @@ class Raven_Client {
 		return sprintf('Sentry %s', implode(', ', $header));
 	}
 
-	private function uuid4() {
+	private function getUuid4() {
 		return str_replace('-', '', sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
 			// 32 bits for "time_low"
 			random_int(0, 0xffff), random_int(0, 0xffff),
@@ -366,5 +354,134 @@ class Raven_Client {
 
 	public function getLastError() {
 		return $this->_lastError;
+	}
+
+	// Raven_Stacktrace
+	private function getStackInfo($stack) {
+
+		$result = [];
+		foreach ($stack as $frame) {
+
+			if (isset($frame['file'])) {
+				$context  = $this->readSourceFile($frame['file'], $frame['line']);
+				$abs_path = $frame['file'];
+				$filename = basename($frame['file']);
+			}
+			else {
+				if (isset($frame['args']))
+					$args = is_string($frame['args']) ? $frame['args'] : @json_encode($frame['args']);
+				else
+					$args = 'n/a';
+
+				if (isset($frame['class']))
+					$context['line'] = sprintf('%s%s%s(%s)', $frame['class'], $frame['type'], $frame['function'], $args);
+				else
+					$context['line'] = sprintf('%s(%s)', $frame['function'], $args);
+
+				$abs_path = '';
+				$filename = '[Anonymous function]';
+				$context['prefix'] = '';
+				$context['suffix'] = '';
+				$context['filename'] = $filename;
+				$context['lineno'] = 0;
+			}
+
+			$module = $filename;
+			if (isset($frame['class']))
+				$module .= ':'.$frame['class'];
+
+			$result[] = [
+				'abs_path'     => $abs_path,
+				'filename'     => $context['filename'],
+				'lineno'       => $context['lineno'],
+				'module'       => $module,
+				'function'     => $frame['function'],
+				'vars'         => [],
+				'pre_context'  => $context['prefix'],
+				'context_line' => $context['line'],
+				'post_context' => $context['suffix'],
+			];
+		}
+
+		return array_reverse($result);
+	}
+
+	private function readSourceFile($filename, $lineno) {
+
+		$frame = [
+			'prefix'   => [],
+			'line'     => '',
+			'suffix'   => [],
+			'filename' => $filename,
+			'lineno'   => $lineno,
+		];
+
+		if (($filename === null) || ($lineno === null))
+			return $frame;
+
+		// Code which is eval'ed have a modified filename.. Extract the
+		// correct filename + linenumber from the string.
+		$matched = preg_match("/^(.*?)\((\d+)\) : eval\(\)'d code$/", $filename, $matches);
+		if ($matched) {
+			[, $filename, $lineno] = $matches;
+			$frame['filename'] = $filename;
+			$frame['lineno']   = $lineno;
+		}
+
+		// Try to open the file. We wrap this in a try/catch block in case
+		// someone has modified the error_trigger to throw exceptions.
+		try {
+			$fh = fopen($filename, 'rb');
+			if ($fh === false)
+				return $frame;
+		}
+		catch (Throwable $t) {
+			return $frame;
+		}
+
+		$cur_lineno = 0;
+		while (!feof($fh)) {
+
+			$cur_lineno++;
+			$line = fgets($fh);
+
+			if ($cur_lineno == $lineno)
+				$frame['line'] = $line;
+			else if ($lineno - $cur_lineno > 0 && $lineno - $cur_lineno < 3)
+				$frame['prefix'][] = $line;
+			else if ($lineno - $cur_lineno > -3 && $lineno - $cur_lineno < 0)
+				$frame['suffix'][] = $line;
+		}
+		fclose($fh);
+
+		return $frame;
+	}
+
+	// Raven_SanitizeData
+	private function apply($value, $fn, $key = null) {
+
+		if (is_array($value)) {
+
+			foreach ($value as $k => $v)
+				$value[$k] = $this->apply($v, $fn, $k);
+
+			return $value;
+		}
+
+		return $fn($key, $value);
+	}
+
+	private function sanitize($key, $value) {
+
+		if (empty($value))
+			return $value;
+
+		if (preg_match('/^\d{16}$/', $value))
+			return '********';
+
+		if (preg_match('/(authorization|password|passwd|secret)/i', $key))
+			return '********';
+
+		return $value;
 	}
 }

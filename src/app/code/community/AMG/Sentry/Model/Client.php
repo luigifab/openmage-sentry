@@ -13,8 +13,7 @@
  * @license    https://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-require_once(Mage::getBaseDir('lib').'/Raven/Autoloader.php');
-Raven_Autoloader::register();
+require_once(Mage::getBaseDir('lib').'/Raven/Client.php');
 
 class AMG_Sentry_Model_Client extends Raven_Client {
 
