@@ -7,10 +7,10 @@
  * It is also available through the world-wide-web at this URL:
  * https://opensource.org/licenses/osl-3.0.php
  *
- * @category      AMG
- * @package       AMG_Sentry
- * @copyright     Copyright © 2012 Jean Roussel <contact@jean-roussel.fr>
- * @license       https://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @category   AMG
+ * @package    AMG_Sentry
+ * @copyright  Copyright © 2012 Jean Roussel <contact@jean-roussel.fr>
+ * @license    https://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 class AMG_Sentry_Model_Observer {
@@ -32,7 +32,6 @@ class AMG_Sentry_Model_Observer {
 }
 
 function sentry_error_handler($errno, $errstr, $errfile, $errline) {
-
 	if ((error_reporting() != 0) || Mage::getStoreConfigFlag('dev/amg-sentry/ignore-error-control-operator'))
 		Mage::getSingleton('amg-sentry/client')->sendMessage($errstr, sprintf('In %s on line %d', $errfile, $errline));
 }
