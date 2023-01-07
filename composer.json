@@ -9,6 +9,11 @@
         {
             "name": "Nicolas Dubois",
             "email": "me@nicolasdubois.com"
+        },
+        {
+            "name": "Fabrice Creuzot (luigifab)",
+            "homepage": "https://www.luigifab.fr",
+            "email": "code@luigifab.fr"
         }
     ],
     "require": {
@@ -18,9 +23,8 @@
     "minimum-stability": "dev",
     "extra": {
         "map": [
-            ["src/app/etc/modules/AMG_Sentry.xml", "app/etc/modules/AMG_Sentry.xml"],
-            ["src/app/code/community/AMG/Sentry/", "app/code/community/AMG/Sentry/"],
-            ["src/lib/Raven/", "lib/Raven/"]
+            ["src/app/etc/modules/Luigifab_Sentry.xml", "app/etc/modules/Luigifab_Sentry.xml"],
+            ["src/app/code/community/Luigifab/Sentry/", "app/code/community/Luigifab/Sentry/"]
         ]
     }
 }

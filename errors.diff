@@ -1,0 +1,49 @@
+diff --git a/web/errors/processor.php b/web/errors/processor.php
+index 9bee05b380..bec9aa06fb 100644
+--- a/web/errors/processor.php
++++ b/web/errors/processor.php
+@@ -388,7 +388,7 @@ class Error_Processor
+     /**
+      * @throws Exception
+      */
+-    public function saveReport(array $reportData)
++    public function saveReport(array $reportData, $t = null)
+     {
+         $this->reportData = $reportData;
+         $this->reportId   = abs((int)(microtime(true) * random_int(100, 1000)));
+@@ -408,6 +408,22 @@ class Error_Processor
+         }
+         $this->_setReportUrl();
+ 
++        // https://github.com/luigifab/openmage-sentry
++        // @see Mage_Core_Model_App::_initCurrentStore()
++        try {
++            global $sentry;
++            if ($sentry && is_object($sentry)) {
++                $text = implode("\n", $reportData);
++                if (empty($t))
++                    $sentry->captureMessage('Report: '.$text, 'fatal', ['source' => 'errors:report', 'report' => $this->reportId]);
++                else
++                    $sentry->captureException($t,
++                        'Report '.$this->reportId.' catched by Processor->saveReport()'."\n".$text,
++                        ['source' => 'errors:report', 'report' => $this->reportId]);
++            }
++        }
++        catch (Throwable $ts) { }
++
+         if (headers_sent()) {
+             echo '<script type="text/javascript">';
+             echo "window.location.href = encodeURI('{$this->reportUrl}');";
+diff --git a/web/errors/report.php b/web/errors/report.php
+index 6e73080bec..2fdfa6619d 100644
+--- a/web/errors/report.php
++++ b/web/errors/report.php
+@@ -26,7 +26,7 @@ require_once 'processor.php';
+ $processor = new Error_Processor();
+ 
+ if (isset($reportData) && is_array($reportData)) {
+-    $processor->saveReport($reportData);
++    $processor->saveReport($reportData, $e ?? null);
+ }
+ 
+ $processor->processReport();

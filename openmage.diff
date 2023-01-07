@@ -1,0 +1,45 @@
+diff --git a/web/app/code/core/Mage/Core/Model/App.php b/web/app/code/core/Mage/Core/Model/App.php
+index 09e50dffda..e9194e4ae1 100644
+--- a/web/app/code/core/Mage/Core/Model/App.php
++++ b/web/app/code/core/Mage/Core/Model/App.php
+@@ -522,9 +522,17 @@ class Mage_Core_Model_App
+             $this->_checkCookieStore($scopeType);
+             $this->_checkGetStore($scopeType);
+         }
+-        $this->_useSessionInUrl = $this->getStore()->getConfig(
+-            Mage_Core_Model_Session_Abstract::XML_PATH_USE_FRONTEND_SID
+-        );
++
++        // https://github.com/luigifab/openmage-sentry
++        $store = $this->getStore();
++        global $sentry;
++        if (empty($sentry)) {
++            $sentry = new Luigifab_Sentry_Model_Client();
++            $sentry->initHandler($store);
++        }
++
++        $this->_useSessionInUrl = $store->getConfig(Mage_Core_Model_Session_Abstract::XML_PATH_USE_FRONTEND_SID);
++
+         return $this;
+     }
+diff --git a/web/app/Mage.php b/web/app/Mage.php
+index 1977db0740..bae6fb6114 100644
+--- a/web/app/Mage.php
++++ b/web/app/Mage.php
+@@ -948,7 +948,15 @@ final class Mage, Mage::logException()
+             return;
+         }
+         $file = self::getStoreConfig('dev/log/exception_file');
+-        self::log("\n" . $e->__toString(), Zend_Log::ERR, $file);
++        self::log(
++            (self::$_isDeveloperMode ? 'isDeveloperMode:on ' : 'isDeveloperMode:off ') .
++            (self::getStoreConfigFlag('dev/sentry/active') ? 'sentry:on' : 'sentry:off') .
++                "\n" . $e->__toString(),
++            Zend_Log::ERR, $file);
++        if (!self::$_isDeveloperMode) {
++            global $sentry;
++            $sentry->captureException($e, null, ['source' => 'mage:logException']);
++        }
+     }
+ 
+     /**

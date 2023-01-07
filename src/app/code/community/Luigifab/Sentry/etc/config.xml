@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!--
+ * Forked from https://github.com/getsentry/magento-amg-sentry-extension
+ * Updated J/05/01/2023
+ *
+ * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
+ * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
+ * https://github.com/luigifab/openmage-sentry
+ *
+ * This program is free software, you can redistribute it or modify
+ * it under the terms of the Open Software License (OSL 3.0).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but without any warranty, without even the implied warranty of
+ * merchantability or fitness for a particular purpose. See the
+ * Open Software License (OSL 3.0) for more details.
+-->
+
+<config>
+	<modules>
+		<Luigifab_Sentry>
+			<version>2.0.0</version>
+		</Luigifab_Sentry>
+	</modules>
+	<global>
+		<blocks>
+			<sentry>
+				<class>Luigifab_Sentry_Block</class>
+			</sentry>
+		</blocks>
+		<models>
+			<sentry>
+				<class>Luigifab_Sentry_Model</class>
+			</sentry>
+		</models>
+	</global>
+	<adminhtml>
+		<events>
+			<admin_system_config_changed_section_dev>
+				<observers>
+					<sentry>
+						<class>sentry/client</class>
+						<method>updateConfig</method>
+					</sentry>
+				</observers>
+			</admin_system_config_changed_section_dev>
+		</events>
+	</adminhtml>
+	<default>
+		<dev>
+			<sentry>
+				<active>0</active>
+				<logger>openmage</logger>
+			</sentry>
+		</dev>
+	</default>
+</config>

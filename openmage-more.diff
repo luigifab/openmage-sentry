@@ -1,0 +1,175 @@
+diff --git a/web/app/code/core/Mage/Core/Model/App.php b/web/app/code/core/Mage/Core/Model/App.php
+index 09e50dffda..e9194e4ae1 100644
+--- a/web/app/code/core/Mage/Core/Model/App.php
++++ b/web/app/code/core/Mage/Core/Model/App.php
+@@ -522,9 +522,17 @@ class Mage_Core_Model_App
+             $this->_checkCookieStore($scopeType);
+             $this->_checkGetStore($scopeType);
+         }
+-        $this->_useSessionInUrl = $this->getStore()->getConfig(
+-            Mage_Core_Model_Session_Abstract::XML_PATH_USE_FRONTEND_SID
+-        );
++
++        // https://github.com/luigifab/openmage-sentry
++        $store = $this->getStore();
++        global $sentry;
++        if (empty($sentry)) {
++            $sentry = new Luigifab_Sentry_Model_Client();
++            $sentry->initHandler($store);
++        }
++
++        $this->_useSessionInUrl = $store->getConfig(Mage_Core_Model_Session_Abstract::XML_PATH_USE_FRONTEND_SID);
++
+         return $this;
+     }
+ 
+diff --git a/web/app/Mage.php b/web/app/Mage.php
+index 1977db0740..bae6fb6114 100644
+--- a/web/app/Mage.php
++++ b/web/app/Mage.php
+@@ -33,6 +33,7 @@ Mage::register('original_include_path', get_include_path());
+ 
+ if (!empty($_SERVER['MAGE_IS_DEVELOPER_MODE']) || !empty($_ENV['MAGE_IS_DEVELOPER_MODE'])) {
+     Mage::setIsDeveloperMode(true);
++    error_reporting(E_ALL);
+     ini_set('display_errors', 1);
+     ini_set('error_prepend_string', '<pre>');
+     ini_set('error_append_string', '</pre>');
+@@ -933,8 +934,7 @@ final class Mage
+             $message = addcslashes($message, '<?');
+             $loggers[$file]->log($message, $level);
+         }
+-        catch (Throwable $e) {
+-        }
++        catch (Throwable $e) { }
+     }
+ 
+     /**
+@@ -948,7 +948,15 @@ final class Mage
+             return;
+         }
+         $file = self::getStoreConfig('dev/log/exception_file');
+-        self::log("\n" . $e->__toString(), Zend_Log::ERR, $file);
++        self::log(
++            (self::$_isDeveloperMode ? 'isDeveloperMode:on ' : 'isDeveloperMode:off ') .
++            (self::getStoreConfigFlag('dev/sentry/active') ? 'sentry:on' : 'sentry:off') .
++                "\n" . $e->__toString(),
++            Zend_Log::ERR, $file);
++        if (!self::$_isDeveloperMode) {
++            global $sentry;
++            $sentry->captureException($e, null, ['source' => 'mage:logException']);
++        }
+     }
+ 
+     /**
+@@ -978,42 +986,49 @@ final class Mage
+      *
+      * @param Throwable $e
+      */
+-    public static function printException(Throwable $e, $extra = '')
++    public static function printException(Throwable $e, $extra = '', $source = '')
+     {
++        try {
++            while (ob_get_level() > 0) {
++                ob_end_clean();
++            }
++        } catch (Throwable $t) { }
++
+         if (self::$_isDeveloperMode) {
+             @http_response_code(500);
+-            print '<pre>';
++            print '<pre style="white-space:pre-wrap;">';
+-
+             if (!empty($extra)) {
+                 print $extra . "\n\n";
+             }
+-
+             print $e->getMessage() . "\n\n";
+-            print $e->getTraceAsString();
++            print $e->getTraceAsString() . "\n";
++            print '  thrown in <b>' . $e->getFile() . '</b> on line <b>' . $e->getLine() . '</b>' . "\n";
++            print '  catched by Mage::printException()' . $source;
+             print '</pre>';
+         } else {
+-
+             $reportData = [
+                 (!empty($extra) ? $extra . "\n\n" : '') . $e->getMessage(),
+-                $e->getTraceAsString()
++                $e->getTraceAsString() . "\n" .
++                    '  thrown in ' . $e->getFile() . ' on line ' . $e->getLine() . "\n" .
++                    '  catched by Mage::printException()' . $source
+             ];
+ 
+             // retrieve server data
+             if (isset($_SERVER)) {
+                 if (isset($_SERVER['REQUEST_URI'])) {
+                     $reportData['url'] = $_SERVER['REQUEST_URI'];
+                 }
+                 if (isset($_SERVER['SCRIPT_NAME'])) {
+                     $reportData['script_name'] = $_SERVER['SCRIPT_NAME'];
+                 }
+             }
+ 
+             // attempt to specify store as a skin
+             try {
+                 $storeCode = self::app()->getStore()->getCode();
+                 $reportData['skin'] = $storeCode;
+             }
+-            catch (Throwable $e) {}
++            catch (Throwable $e) { }
+ 
+             require_once(self::getBaseDir() . DS . 'errors' . DS . 'report.php');
+         }
+diff --git a/web/app/code/core/Mage/Core/Block/Template.php b/web/app/code/core/Mage/Core/Block/Template.php
+index e3e040f5a7..435298b183 100644
+--- a/web/app/code/core/Mage/Core/Block/Template.php
++++ b/web/app/code/core/Mage/Core/Block/Template.php
+@@ -260,7 +260,10 @@ HTML;
+                 Mage::log('Not valid template file:' . $fileName . ' class: ' . $thisClass, Zend_Log::CRIT, null, true);
+             }
+         } catch (Throwable $e) {
+-            ob_get_clean();
++            if (!$do) {
++                ob_get_clean();
++                $do = true;
++            }
+             if (Mage::getIsDeveloperMode()) {
+                 throw $e;
+             }
+diff --git a/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php b/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php
+index 8ef1571438..27b851f1f4 100644
+--- a/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php
++++ b/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php
+@@ -556,6 +556,9 @@ class Mage_Core_Model_Email_Template_Filter extends Varien_Filter_Template
+         try {
+             $value = parent::filter($value);
+         } catch (Throwable $e) {
++            if (Mage::getIsDeveloperMode()) {
++                throw $e;
++            }
+             $value = '';
+             Mage::logException($e);
+         }
+@@ -576,6 +579,9 @@ class Mage_Core_Model_Email_Template_Filter extends Varien_Filter_Template
+         try {
+             $result = parent::_getVariable($value, $default);
+         } catch (Throwable $e) {
++            if (Mage::getIsDeveloperMode()) {
++                throw $e;
++            }
+             $result = '';
+             Mage::logException($e);
+         }
+diff --git a/web/app/code/core/Mage/Core/functions.php b/web/app/code/core/Mage/Core/functions.php
+index c647d92537..986d077b07 100644
+--- a/web/app/code/core/Mage/Core/functions.php
++++ b/web/app/code/core/Mage/Core/functions.php
+@@ -187,7 +187,7 @@ function mageCoreErrorHandler($errno, $errstr, $errfile, $errline)
+ 
+     $errorMessage .= ": {$errstr}  in {$errfile} on line {$errline}";
+     if (Mage::getIsDeveloperMode()) {
+-        throw new Exception($errorMessage);
++        Mage::printException(new ErrorException($errorMessage, 0, $errno, $errfile, $errline), '', ' via mageCoreErrorHandler()');
+     } else {
+         Mage::log($errorMessage, Zend_Log::ERR);
+     }

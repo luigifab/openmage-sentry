@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<!--
+ * Forked from https://github.com/getsentry/magento-amg-sentry-extension
+ * Updated J/05/01/2023
+ *
+ * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
+ * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
+ * https://github.com/luigifab/openmage-sentry
+ *
+ * This program is free software, you can redistribute it or modify
+ * it under the terms of the Open Software License (OSL 3.0).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but without any warranty, without even the implied warranty of
+ * merchantability or fitness for a particular purpose. See the
+ * Open Software License (OSL 3.0) for more details.
+-->
+
+<config>
+	<sections>
+		<dev>
+			<groups>
+				<sentry>
+					<label>Sentry</label>
+					<comment><![CDATA[Please read the readme at <a href="https://github.com/luigifab/openmage-sentry" style="margin:0;">github.com/luigifab/openmage-sentry</a>.]]></comment>
+					<sort_order>0</sort_order>
+					<show_in_default>1</show_in_default>
+					<show_in_website>1</show_in_website>
+					<show_in_store>1</show_in_store>
+					<fields>
+						<active translate="label">
+							<label>Enable</label>
+							<comment>When enabled and when developer mode is enabled, PHP errors and exceptions are displayed, they are NOT sent to Sentry.</comment>
+							<frontend_type>select</frontend_type>
+							<source_model>adminhtml/system_config_source_yesno</source_model>
+							<sort_order>1</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</active>
+						<report_all_errors>
+							<label>Report all errors</label>
+							<comment>error_reporting(E_ALL)</comment>
+							<frontend_type>select</frontend_type>
+							<source_model>adminhtml/system_config_source_yesno</source_model>
+							<sort_order>2</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</report_all_errors>
+						<dsn>
+							<label>DSN for PHP</label>
+							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
+							<sort_order>3</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</dsn>
+						<dsn_js_admin>
+							<label>DSN for JS ADMIN</label>
+							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
+							<sort_order>4</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</dsn_js_admin>
+						<dsn_js_front>
+							<label>DSN for JS FRONT</label>
+							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
+							<sort_order>5</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>1</show_in_website>
+							<show_in_store>1</show_in_store>
+						</dsn_js_front>
+						<logger>
+							<label>Logger name</label>
+							<sort_order>6</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>1</show_in_website>
+							<show_in_store>1</show_in_store>
+						</logger>
+						<test>
+							<label>Test DSN for PHP</label>
+							<frontend_type>label</frontend_type>
+							<frontend_model>sentry/test</frontend_model>
+							<sort_order>7</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</test>
+					</fields>
+				</sentry>
+			</groups>
+		</dev>
+	</sections>
+</config>
