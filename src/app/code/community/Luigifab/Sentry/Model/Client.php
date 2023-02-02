@@ -1,7 +1,7 @@
 <?php
 /**
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated J/05/01/2023
+ * Updated J/26/01/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -166,7 +166,7 @@ class Luigifab_Sentry_Model_Client {
 			return $user;
 		}
 		catch (Throwable $t) {
-			return '';
+			return false;
 		}
 	}
 
@@ -386,7 +386,8 @@ class Luigifab_Sentry_Model_Client {
 		}
 
 		$data['tags'] = $this->_tags + $tags;
-		$data['tags']['username'] = $this->getUsername();
+		if (!empty($user = $this->getUsername()))
+			$data['tags']['username'] = $user;
 
 		$result = $this->send($this->apply($this->removeInvalidUtf8($data)));
 
