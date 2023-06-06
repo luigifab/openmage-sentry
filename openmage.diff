@@ -13,7 +13,7 @@ index 09e50dffda..e9194e4ae1 100644
 +        // https://github.com/luigifab/openmage-sentry
 +        $store = $this->getStore();
 +        global $sentry;
-+        if (empty($sentry)) {
++        if (!$sentry) {
 +            $sentry = new Luigifab_Sentry_Model_Client();
 +            $sentry->initHandler($store);
 +        }
@@ -22,6 +22,7 @@ index 09e50dffda..e9194e4ae1 100644
 +
          return $this;
      }
+ 
 diff --git a/web/app/Mage.php b/web/app/Mage.php
 index 1977db0740..bae6fb6114 100644
 --- a/web/app/Mage.php

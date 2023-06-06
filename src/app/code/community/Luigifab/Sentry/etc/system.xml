@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated J/05/01/2023
+ * Updated D/09/04/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -23,12 +23,18 @@
 			<groups>
 				<sentry>
 					<label>Sentry</label>
-					<comment><![CDATA[Please read the readme at <a href="https://github.com/luigifab/openmage-sentry" style="margin:0;">github.com/luigifab/openmage-sentry</a>.]]></comment>
 					<sort_order>0</sort_order>
 					<show_in_default>1</show_in_default>
 					<show_in_website>1</show_in_website>
 					<show_in_store>1</show_in_store>
 					<fields>
+						<help>
+							<frontend_model>sentry/help</frontend_model>
+							<sort_order>0</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>1</show_in_website>
+							<show_in_store>1</show_in_store>
+						</help>
 						<active translate="label">
 							<label>Enable</label>
 							<comment>When enabled and when developer mode is enabled, PHP errors and exceptions are displayed, they are NOT sent to Sentry.</comment>

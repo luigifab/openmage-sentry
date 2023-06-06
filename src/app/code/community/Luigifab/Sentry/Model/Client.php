@@ -1,7 +1,7 @@
 <?php
 /**
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated J/26/01/2023
+ * Updated M/16/05/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -23,6 +23,7 @@ class Luigifab_Sentry_Model_Client {
 	protected $_defaultLogger = 'om';
 	protected $_oldExceptionHandler;
 	protected $_oldErrorHandler;
+	protected $_reports = (PHP_SAPI != 'cli') ? [] : false;
 
 	// EVENT admin_system_config_changed_section_dev (adminhtml)
 	public function updateConfig() {
@@ -32,7 +33,7 @@ class Luigifab_Sentry_Model_Client {
 			global $sentry;
 			$session = Mage::getSingleton('adminhtml/session');
 
-			if ($sentry && is_object($sentry)) {
+			if (!$sentry || !is_object($sentry)) {
 				$session->addError('Sentry is not fully installed: $sentry not found!');
 			}
 			else if (($error = $this->initSentry(true)) !== true) {
@@ -48,7 +49,9 @@ class Luigifab_Sentry_Model_Client {
 	// CALL from Mage_Core_Model_App::_initCurrentStore()
 	public function initHandler($store = null) {
 
-		if (empty($store))
+		if (!empty($_COOKIE['__blackfire']) && empty($_GET['blackfire']))
+			$isActive = false;
+		else if (empty($store))
 			$isActive = Mage::getStoreConfigFlag('dev/sentry/active') && !empty($dsn = Mage::getStoreConfig('dev/sentry/dsn'));
 		else
 			$isActive = !empty($store->getConfig('dev/sentry/active')) && !empty($dsn = $store->getConfig('dev/sentry/dsn'));
@@ -114,7 +117,17 @@ class Luigifab_Sentry_Model_Client {
 		}
 	}
 
+	// send report(s) after fastcgi_finish_request
+	public function __destruct() {
 
+		if (!empty($this->_reports)) {
+			while (is_array($report = array_shift($this->_reports)))
+				$this->{$report['type']}($report['url'], $report['data'], $report['headers']);
+		}
+	}
+
+
+	// for openmage
 	protected function initSentry($isTest = false) {
 
 		if (is_bool($this->_isEnabled))
@@ -399,13 +412,12 @@ class Luigifab_Sentry_Model_Client {
 		$message   = base64_encode(gzcompress(json_encode($data)));
 		$timestamp = microtime(true);
 		$signature = $this->getSignature($message, $timestamp, $this->_secretKey);
-		$headers = [
+
+		return $this->sendRemote($this->_serverUrl, $message, [
 			'User-Agent'    => $this->_clientName,
 			'X-Sentry-Auth' => $this->getAuthHeader($signature, $timestamp, $this->_clientName, $this->_publicKey),
 			'Content-Type'  => 'application/octet-stream',
-		];
-
-		return $this->sendRemote($this->_serverUrl, $message, $headers);
+		]);
 	}
 
 	private function sendRemote($url, $data, $headers) {
@@ -415,8 +427,20 @@ class Luigifab_Sentry_Model_Client {
 
 		// PHP 8.0+ for $parts
 		// Value should be one of: "scheme", "host", "port", "user", "pass", "query", "path", "fragment"
-		if ($parts['scheme'] == 'udp')
+		if ($parts['scheme'] == 'udp') {
+
+			if (is_array($this->_reports)) {
+				$this->_reports[] = ['type' => 'sendUdp', 'url' => $parts['netloc'], 'data' => $data, 'headers' => $headers['X-Sentry-Auth']];
+				return true;
+			}
+
 			return $this->sendUdp($parts['netloc'], $data, $headers['X-Sentry-Auth']);
+		}
+
+		if (is_array($this->_reports)) {
+			$this->_reports[] = ['type' => 'sendHttp', 'url' => $url, 'data' => $data, 'headers' => $headers];
+			return true;
+		}
 
 		return $this->sendHttp($url, $data, $headers);
 	}

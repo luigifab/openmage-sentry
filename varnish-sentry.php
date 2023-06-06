@@ -1,7 +1,7 @@
 <?php
 /**
  * Created M/20/12/2022
- * Updated J/05/01/2023
+ * Updated V/19/05/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -17,11 +17,12 @@
  * Open Software License (OSL 3.0) for more details.
  */
 
-if (PHP_SAPI != 'cli')
-	exit(-1);
-
+chdir(__DIR__);
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
+if (PHP_SAPI != 'cli')
+	exit(-1);
 
 // run this script on varnish server
 // it require php-cli php-curl
@@ -124,6 +125,8 @@ while (!feof($proc)) {
 		$_SERVER['HTTP_X_FORWARDED_PROTO'] = $requestData['X-Forwarded-Proto'] ?? null;
 		$_SERVER['HTTP_HOST'] = $requestData['Host'] ?? null;
 
+		if (empty($_SERVER['REQUEST_URI']))
+			$_SERVER['REQUEST_URI'] = '';
 		if (!empty($requestData['X-Forwarded-Proto']))
 			$_SERVER['REQUEST_SCHEME'] = $requestData['X-Forwarded-Proto'];
 
@@ -135,7 +138,7 @@ while (!feof($proc)) {
 		$msg = $reqMet.' '.$reqSta;
 		if ($reqSta != 401) { // @todo
 			$headers = $requestData; // getallheaders
-			$eventId = $sentry->captureMessage($msg."\n".$_SERVER['REQUEST_URI'], 'error', ['source' => 'sentry:varnish']);
+			$eventId = $sentry->captureMessage(empty($_SERVER['REQUEST_URI']) ? $msg : $msg."\n".$_SERVER['REQUEST_URI'], 'error', ['source' => 'sentry:varnish']);
 			echo date('c'),' event: ',$eventId,', message: ',$msg,' ',$_SERVER['REQUEST_URI'],' (',$_SERVER['HTTP_HOST'],")\n";
 		}
 		else {
@@ -154,7 +157,9 @@ class Client {
 
 	protected $_isEnabled = true;
 	protected $_defaultLogger = 'varnish';
+	protected $_reports = false;
 
+	// for varnish
 	protected function initSentry() {
 		return $this->_isEnabled;
 	}
@@ -370,7 +375,8 @@ class Client {
 		}
 
 		$data['tags'] = $this->_tags + $tags;
-		$data['tags']['username'] = $this->getUsername();
+		if (!empty($user = $this->getUsername()))
+			$data['tags']['username'] = $user;
 
 		$result = $this->send($this->apply($this->removeInvalidUtf8($data)));
 
@@ -382,13 +388,12 @@ class Client {
 		$message   = base64_encode(gzcompress(json_encode($data)));
 		$timestamp = microtime(true);
 		$signature = $this->getSignature($message, $timestamp, $this->_secretKey);
-		$headers = [
+
+		return $this->sendRemote($this->_serverUrl, $message, [
 			'User-Agent'    => $this->_clientName,
 			'X-Sentry-Auth' => $this->getAuthHeader($signature, $timestamp, $this->_clientName, $this->_publicKey),
 			'Content-Type'  => 'application/octet-stream',
-		];
-
-		return $this->sendRemote($this->_serverUrl, $message, $headers);
+		]);
 	}
 
 	private function sendRemote($url, $data, $headers) {
@@ -398,8 +403,20 @@ class Client {
 
 		// PHP 8.0+ for $parts
 		// Value should be one of: "scheme", "host", "port", "user", "pass", "query", "path", "fragment"
-		if ($parts['scheme'] == 'udp')
+		if ($parts['scheme'] == 'udp') {
+
+			if (is_array($this->_reports)) {
+				$this->_reports[] = ['type' => 'sendUdp', 'url' => $parts['netloc'], 'data' => $data, 'headers' => $headers['X-Sentry-Auth']];
+				return true;
+			}
+
 			return $this->sendUdp($parts['netloc'], $data, $headers['X-Sentry-Auth']);
+		}
+
+		if (is_array($this->_reports)) {
+			$this->_reports[] = ['type' => 'sendHttp', 'url' => $url, 'data' => $data, 'headers' => $headers];
+			return true;
+		}
 
 		return $this->sendHttp($url, $data, $headers);
 	}

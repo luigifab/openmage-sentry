@@ -27,7 +27,10 @@ To install:
 
 For configuration, go to: `System / Configuration / Developer / Sentry`.
 
-- Current version: 2.0.0 (02/02/2023)
+New: errors when profiling with Blackfire are not sent to Sentry, errors are sent to Sentry at the end in the `__destruct()`, for _varnish-sentry.php_ run it in a `screen`.
+
+
+- Current version: 2.1.0 (06/06/2023)
 - Compatibility: OpenMage 19.x / 20.x / 21.x, PHP 7.2 / 7.3 / 7.4 / 8.0 / 8.1 / 8.2
 - License: OSL 3.0
 

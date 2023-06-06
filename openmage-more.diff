@@ -13,7 +13,7 @@ index 09e50dffda..e9194e4ae1 100644
 +        // https://github.com/luigifab/openmage-sentry
 +        $store = $this->getStore();
 +        global $sentry;
-+        if (empty($sentry)) {
++        if (!$sentry) {
 +            $sentry = new Luigifab_Sentry_Model_Client();
 +            $sentry->initHandler($store);
 +        }
@@ -32,16 +32,16 @@ index 1977db0740..bae6fb6114 100644
  if (!empty($_SERVER['MAGE_IS_DEVELOPER_MODE']) || !empty($_ENV['MAGE_IS_DEVELOPER_MODE'])) {
      Mage::setIsDeveloperMode(true);
 +    error_reporting(E_ALL);
-     ini_set('display_errors', 1);
+     ini_set('display_errors', '1');
      ini_set('error_prepend_string', '<pre>');
      ini_set('error_append_string', '</pre>');
 @@ -933,8 +934,7 @@ final class Mage
+ 
              $message = addcslashes($message, '<?');
              $loggers[$file]->log($message, $level);
-         }
--        catch (Throwable $e) {
+-        } catch (Throwable $e) {
 -        }
-+        catch (Throwable $e) { }
++        } catch (Throwable $e) { }
      }
  
      /**
@@ -62,7 +62,7 @@ index 1977db0740..bae6fb6114 100644
      }
  
      /**
-@@ -978,42 +986,49 @@ final class Mage
+@@ -978,38 +986,54 @@ final class Mage
       *
       * @param Throwable $e
       */
@@ -76,9 +76,11 @@ index 1977db0740..bae6fb6114 100644
 +        } catch (Throwable $t) { }
 +
          if (self::$_isDeveloperMode) {
-             @http_response_code(500);
 -            print '<pre>';
-+            print '<pre style="white-space:pre-wrap;">';
++            if (PHP_SAPI != 'cli') {
++                @http_response_code(500);
++                print '<pre style="white-space:pre-wrap;">';
++            }
 -
              if (!empty($extra)) {
                  print $extra . "\n\n";
@@ -87,55 +89,43 @@ index 1977db0740..bae6fb6114 100644
              print $e->getMessage() . "\n\n";
 -            print $e->getTraceAsString();
 +            print $e->getTraceAsString() . "\n";
-+            print '  thrown in <b>' . $e->getFile() . '</b> on line <b>' . $e->getLine() . '</b>' . "\n";
-+            print '  catched by Mage::printException()' . $source;
-             print '</pre>';
++            if (PHP_SAPI != 'cli') {
++                print '  thrown in <b>' . $e->getFile() . '</b> on line <b>' . $e->getLine() . '</b>' . "\n";
++            } else {
++                print '  thrown in ' . $e->getFile() . ' on line ' . $e->getLine() . "\n";
++            }
++            print '  catched by Mage::printException()' . $source . ' at ' . date('c') . "\n";
+-            print '</pre>';
++            if (PHP_SAPI != 'cli') {
++                print '</pre>';
++            }
          } else {
--
              $reportData = [
                  (!empty($extra) ? $extra . "\n\n" : '') . $e->getMessage(),
 -                $e->getTraceAsString()
 +                $e->getTraceAsString() . "\n" .
 +                    '  thrown in ' . $e->getFile() . ' on line ' . $e->getLine() . "\n" .
-+                    '  catched by Mage::printException()' . $source
++                    '  catched by Mage::printException()' . $source . ' at ' . date('c')
              ];
  
              // retrieve server data
-             if (isset($_SERVER)) {
-                 if (isset($_SERVER['REQUEST_URI'])) {
-                     $reportData['url'] = $_SERVER['REQUEST_URI'];
-                 }
-                 if (isset($_SERVER['SCRIPT_NAME'])) {
-                     $reportData['script_name'] = $_SERVER['SCRIPT_NAME'];
-                 }
+             if (isset($_SERVER['REQUEST_URI'])) {
+                 $reportData['url'] = $_SERVER['REQUEST_URI'];
+             }
+             if (isset($_SERVER['SCRIPT_NAME'])) {
+                 $reportData['script_name'] = $_SERVER['SCRIPT_NAME'];
              }
  
              // attempt to specify store as a skin
              try {
                  $storeCode = self::app()->getStore()->getCode();
                  $reportData['skin'] = $storeCode;
-             }
--            catch (Throwable $e) {}
-+            catch (Throwable $e) { }
+-            } catch (Throwable $e) {
+-            }
++            } catch (Throwable $e) { }
  
              require_once(self::getBaseDir() . DS . 'errors' . DS . 'report.php');
          }
-diff --git a/web/app/code/core/Mage/Core/Block/Template.php b/web/app/code/core/Mage/Core/Block/Template.php
-index e3e040f5a7..435298b183 100644
---- a/web/app/code/core/Mage/Core/Block/Template.php
-+++ b/web/app/code/core/Mage/Core/Block/Template.php
-@@ -260,7 +260,10 @@ HTML;
-                 Mage::log('Not valid template file:' . $fileName . ' class: ' . $thisClass, Zend_Log::CRIT, null, true);
-             }
-         } catch (Throwable $e) {
--            ob_get_clean();
-+            if (!$do) {
-+                ob_get_clean();
-+                $do = true;
-+            }
-             if (Mage::getIsDeveloperMode()) {
-                 throw $e;
-             }
 diff --git a/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php b/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php
 index 8ef1571438..27b851f1f4 100644
 --- a/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php
@@ -173,3 +163,31 @@ index c647d92537..986d077b07 100644
      } else {
          Mage::log($errorMessage, Zend_Log::ERR);
      }
+diff --git a/web/app/code/core/Mage/Core/Block/Template.php b/web/app/code/core/Mage/Core/Block/Template.php
+index e3e040f5a7..435298b183 100644
+--- a/web/app/code/core/Mage/Core/Block/Template.php
++++ b/web/app/code/core/Mage/Core/Block/Template.php
+@@ -260,7 +260,10 @@ HTML;
+                 Mage::log('Not valid template file:' . $fileName . ' class: ' . $thisClass, Zend_Log::CRIT, null, true);
+             }
+         } catch (Throwable $e) {
+-            ob_get_clean();
++            if (!$do) {
++                ob_get_clean();
++                $do = true;
++            }
+             if (Mage::getIsDeveloperMode()) {
+                 throw $e;
+diff --git a/web/app/code/core/Mage/Catalog/controllers/ProductController.php b/web/app/code/core/Mage/Catalog/controllers/ProductController.php
+index f9b93cec4c..8f3d2c0758 100644
+--- a/web/app/code/core/Mage/Catalog/controllers/ProductController.php
++++ b/web/app/code/core/Mage/Catalog/controllers/ProductController.php
+@@ -133,6 +133,8 @@ class Mage_Catalog_ProductController extends Mage_Core_Controller_Front_Action
+                 } elseif (!$this->getResponse()->isRedirect()) {
+                     $this->_forward('noRoute');
+                 }
++            } else if (Mage::getIsDeveloperMode()) {
++                Mage::printException($e);
+             } else {
+                 Mage::logException($e);
+                 $this->_forward('noRoute');
