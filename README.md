@@ -2,13 +2,11 @@ Stop russian war. **🇺🇦 Free Ukraine!**
 
 # sentry
 
-This is a fork. I think it works. DSN JS not yet implemented.
+This is a fork. DSN JS not yet implemented.
 
 ![Screenshot](images/sentry.png?raw=true)
 
-**This new version is fully incompatible with previous ones.**
-
-Run the following queries to update and delete old configuration values:
+Run the following queries to update and delete old configuration values (to v2+):
 ```sql
 UPDATE core_config_data SET path = REPLACE(path, "/amg-sentry/", "/sentry/") WHERE path LIKE "%/amg-sentry/%";
 UPDATE core_config_data SET path = REPLACE(path, "-", "_") WHERE path LIKE "%/sentry/%";
@@ -25,13 +23,24 @@ To install:
 - apply `openmage.diff` or `openmage-more.diff`
 - apply `errors.diff`
 
+To upgrade:
+- revert `openmage.diff` or `openmage-more.diff`
+- upgrade with composer
+- apply `openmage.diff` or `openmage-more.diff`
+
+After any upgrade of OpenMage, apply `errors.diff` and `openmage[-more].diff` again.
+
 For configuration, go to: `System / Configuration / Developer / Sentry`.
 
-New: errors when profiling with Blackfire are not sent to Sentry, errors are sent to Sentry at the end in the `__destruct()`, for _varnish-sentry.php_ run it in a `screen`.
+Notes:
+- errors when profiling with Blackfire are not sent to Sentry
+- errors are sent to Sentry after `fastcgi_finish_request` in the `__destruct()`
+- run _varnish-sentry.php_ in a `screen`
 
+---
 
-- Current version: 2.1.0 (06/06/2023)
-- Compatibility: OpenMage 19.x / 20.x / 21.x, PHP 7.2 / 7.3 / 7.4 / 8.0 / 8.1 / 8.2
+- Current version: 2.2.0 (10/10/2023)
+- Compatibility: OpenMage 19.x / 20.x / 21.x, PHP 7.2 / 7.3 / 7.4 / 8.0 / 8.1 / 8.2 / 8.3
 - License: OSL 3.0
 
 If you like, take some of your time to improve some translations, go to https://bit.ly/2HyCCEc.

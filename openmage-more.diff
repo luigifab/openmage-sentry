@@ -1,5 +1,5 @@
 diff --git a/web/app/code/core/Mage/Core/Model/App.php b/web/app/code/core/Mage/Core/Model/App.php
-index 09e50dffda..e9194e4ae1 100644
+index 83b6a98bd..78196fb12 100644
 --- a/web/app/code/core/Mage/Core/Model/App.php
 +++ b/web/app/code/core/Mage/Core/Model/App.php
 @@ -522,9 +522,17 @@ class Mage_Core_Model_App
@@ -24,7 +24,7 @@ index 09e50dffda..e9194e4ae1 100644
      }
  
 diff --git a/web/app/Mage.php b/web/app/Mage.php
-index 1977db0740..bae6fb6114 100644
+index 83b6a98bd..78196fb12 100644
 --- a/web/app/Mage.php
 +++ b/web/app/Mage.php
 @@ -33,6 +33,7 @@ Mage::register('original_include_path', get_include_path());
@@ -126,8 +126,43 @@ index 1977db0740..bae6fb6114 100644
  
              require_once(self::getBaseDir() . DS . 'errors' . DS . 'report.php');
          }
+diff --git a/web/app/code/core/Mage/Api/Model/Server/Handler/Abstract.php b/web/app/code/core/Mage/Api/Model/Server/Handler/Abstract.php
+index 83b6a98bd..78196fb12 100644
+--- a/web/app/code/core/Mage/Api/Model/Server/Handler/Abstract.php
++++ b/web/app/code/core/Mage/Api/Model/Server/Handler/Abstract.php
+@@ -35,9 +35,15 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
+      * @param string $errorFile
+      * @return bool
+      */
+-    public function handlePhpError($errorCode, $errorMessage, $errorFile, $errLine)
++    public function handlePhpError($errorCode, $errorMessage, $errorFile, $errLine, $context = [])
+     {
+-        Mage::log($errorMessage . ' in ' . $errorFile . ' on line ' . $errLine, Zend_Log::ERR);
++        global $sentry;
++        if ($sentry) {
++            $sentry->handleError($errorCode, $errorMessage, $errorFile, $errLine, $context);
++        }
++        else {
++            Mage::log($errorMessage . ' in ' . $errorFile . ' on line ' . $errLine, Zend_Log::ERR);
++        }
+         if (in_array($errorCode, [E_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR])) {
+             $this->_fault('internal');
+         }
+diff --git a/web/app/code/core/Mage/Core/functions.php b/web/app/code/core/Mage/Core/functions.php
+index 83b6a98bd..78196fb12 100644
+--- a/web/app/code/core/Mage/Core/functions.php
++++ b/web/app/code/core/Mage/Core/functions.php
+@@ -187,7 +187,7 @@ function mageCoreErrorHandler($errno, $errstr, $errfile, $errline)
+ 
+     $errorMessage .= ": {$errstr}  in {$errfile} on line {$errline}";
+     if (Mage::getIsDeveloperMode()) {
+-        throw new Exception($errorMessage);
++        Mage::printException(new ErrorException($errorMessage, 0, $errno, $errfile, $errline), '', ' via mageCoreErrorHandler()');
+     } else {
+         Mage::log($errorMessage, Zend_Log::ERR);
+     }
 diff --git a/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php b/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php
-index 8ef1571438..27b851f1f4 100644
+index 83b6a98bd..78196fb12 100644
 --- a/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php
 +++ b/web/app/code/core/Mage/Core/Model/Email/Template/Filter.php
 @@ -556,6 +556,9 @@ class Mage_Core_Model_Email_Template_Filter extends Varien_Filter_Template
@@ -150,21 +185,8 @@ index 8ef1571438..27b851f1f4 100644
              $result = '';
              Mage::logException($e);
          }
-diff --git a/web/app/code/core/Mage/Core/functions.php b/web/app/code/core/Mage/Core/functions.php
-index c647d92537..986d077b07 100644
---- a/web/app/code/core/Mage/Core/functions.php
-+++ b/web/app/code/core/Mage/Core/functions.php
-@@ -187,7 +187,7 @@ function mageCoreErrorHandler($errno, $errstr, $errfile, $errline)
- 
-     $errorMessage .= ": {$errstr}  in {$errfile} on line {$errline}";
-     if (Mage::getIsDeveloperMode()) {
--        throw new Exception($errorMessage);
-+        Mage::printException(new ErrorException($errorMessage, 0, $errno, $errfile, $errline), '', ' via mageCoreErrorHandler()');
-     } else {
-         Mage::log($errorMessage, Zend_Log::ERR);
-     }
 diff --git a/web/app/code/core/Mage/Core/Block/Template.php b/web/app/code/core/Mage/Core/Block/Template.php
-index e3e040f5a7..435298b183 100644
+index 83b6a98bd..78196fb12 100644
 --- a/web/app/code/core/Mage/Core/Block/Template.php
 +++ b/web/app/code/core/Mage/Core/Block/Template.php
 @@ -260,7 +260,10 @@ HTML;
@@ -179,14 +201,14 @@ index e3e040f5a7..435298b183 100644
              if (Mage::getIsDeveloperMode()) {
                  throw $e;
 diff --git a/web/app/code/core/Mage/Catalog/controllers/ProductController.php b/web/app/code/core/Mage/Catalog/controllers/ProductController.php
-index f9b93cec4c..8f3d2c0758 100644
+index 83b6a98bd..78196fb12 100644
 --- a/web/app/code/core/Mage/Catalog/controllers/ProductController.php
 +++ b/web/app/code/core/Mage/Catalog/controllers/ProductController.php
 @@ -133,6 +133,8 @@ class Mage_Catalog_ProductController extends Mage_Core_Controller_Front_Action
                  } elseif (!$this->getResponse()->isRedirect()) {
                      $this->_forward('noRoute');
                  }
-+            } else if (Mage::getIsDeveloperMode()) {
++            } elseif (Mage::getIsDeveloperMode()) {
 +                Mage::printException($e);
              } else {
                  Mage::logException($e);

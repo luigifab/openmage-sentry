@@ -1,7 +1,7 @@
 <?php
 /**
  * Created M/20/12/2022
- * Updated V/19/05/2023
+ * Updated J/05/10/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -169,7 +169,7 @@ class Client {
 		return 'varnish:'.$username;
 	}
 
-	protected function addSourceFile($exception) {
+	protected function addSourceFile($exception, $trace = []) {
 		return true;
 	}
 
@@ -253,12 +253,10 @@ class Client {
 			],
 		];
 
-		/**
-		 * Exception::getTrace doesn't store the point at where the exception
-		 * was thrown, so we have to stuff it in ourselves. Ugh.
-		 */
+		// Exception::getTrace doesn't store the point at where the exception
+		// was thrown, so we have to stuff it in ourselves. Ugh.
 		$trace = $exception->getTrace();
-		if ($this->addSourceFile($exception))
+		if ($this->addSourceFile($exception, $trace))
 			array_unshift($trace, ['file' => $exception->getFile(), 'line' => $exception->getLine()]);
 
 		return $this->capture($data, $trace, $tags);
@@ -642,6 +640,9 @@ class Client {
 
 		if (empty($value))
 			return $value;
+
+		if (is_object($value))
+			return '#OBJECT! '.get_class($value);
 
 		if (preg_match('/^\d{16}$/', $value))
 			return '********';

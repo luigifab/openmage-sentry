@@ -1,7 +1,7 @@
 <?php
 /**
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated M/16/05/2023
+ * Updated J/05/10/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -183,7 +183,7 @@ class Luigifab_Sentry_Model_Client {
 		}
 	}
 
-	protected function addSourceFile($exception) {
+	protected function addSourceFile($exception, $trace = []) {
 
 		$add = true;
 
@@ -277,12 +277,10 @@ class Luigifab_Sentry_Model_Client {
 			],
 		];
 
-		/**
-		 * Exception::getTrace doesn't store the point at where the exception
-		 * was thrown, so we have to stuff it in ourselves. Ugh.
-		 */
+		// Exception::getTrace doesn't store the point at where the exception
+		// was thrown, so we have to stuff it in ourselves. Ugh.
 		$trace = $exception->getTrace();
-		if ($this->addSourceFile($exception))
+		if ($this->addSourceFile($exception, $trace))
 			array_unshift($trace, ['file' => $exception->getFile(), 'line' => $exception->getLine()]);
 
 		return $this->capture($data, $trace, $tags);
@@ -666,6 +664,9 @@ class Luigifab_Sentry_Model_Client {
 
 		if (empty($value))
 			return $value;
+
+		if (is_object($value))
+			return '#OBJECT! '.get_class($value);
 
 		if (preg_match('/^\d{16}$/', $value))
 			return '********';
