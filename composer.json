@@ -28,7 +28,12 @@
     "extra": {
         "map": [
             ["src/app/etc/modules/Luigifab_Sentry.xml", "app/etc/modules/Luigifab_Sentry.xml"],
-            ["src/app/code/community/Luigifab/Sentry/", "app/code/community/Luigifab/Sentry/"]
+            ["src/app/code/community/Luigifab/Sentry/", "app/code/community/Luigifab/Sentry/"],
+            ["src/app/design/adminhtml/default/default/layout/luigifab/sentry.xml", "app/design/adminhtml/default/default/layout/luigifab/sentry.xml"],
+            ["src/app/design/adminhtml/default/default/template/luigifab/sentry/", "app/design/adminhtml/default/default/template/luigifab/sentry/"],
+            ["src/app/design/frontend/base/default/layout/luigifab/sentry.xml", "app/design/frontend/base/default/layout/luigifab/sentry.xml"],
+            ["src/app/design/frontend/base/default/template/luigifab/sentry/", "app/design/frontend/base/default/template/luigifab/sentry/"],
+            ["src/js/sentry/", "js/sentry/"]
         ]
     }
 }

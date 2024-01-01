@@ -1,10 +1,10 @@
 <?php
 /**
  * Created D/09/04/2023
- * Updated D/09/04/2023
+ * Updated S/16/12/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
- * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2024 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
  * https://github.com/luigifab/openmage-sentry
  *
@@ -21,12 +21,14 @@ class Luigifab_Sentry_Block_Help extends Mage_Adminhtml_Block_Abstract implement
 
 	public function render(Varien_Data_Form_Element_Abstract $element) {
 
-		global $sentry;
-		$app = file_get_contents(BP.'/app/code/core/Mage/Core/Model/App.php');
-		$msg = 'Please read the readme at <a href="https://github.com/luigifab/openmage-sentry" style="margin:0;">github.com/luigifab/openmage-sentry</a>.';
+		$msg = '<a href="https://github.com/luigifab/openmage-sentry" style="margin:0;">github.com/luigifab/openmage-sentry</a>';
 
+		$src = 'app/code/core/Mage/Core/Model/App.php';
+		$app = file_get_contents(BP.'/'.$src);
 		if (!str_contains($app, '$sentry = new Luigifab_Sentry_Model_Client();'))
-			return '<div class="comment"><strong>INCOMPLETE MODULE INSTALLATION!</strong> Changes in <em>app/code/core/Mage/Core/Model/App.php</em> are not present.<br />'.$msg.'</div>';
+			return '<div class="comment"><strong>INCOMPLETE MODULE INSTALLATION!</strong> Changes in <em>'.$src.'</em> are not present.<br />'.$msg.'</div>';
+
+		global $sentry;
 		if (!$sentry || !is_object($sentry))
 			return '<div class="comment"><strong>INCOMPLETE MODULE INSTALLATION!</strong> The <em>$sentry</em> global variable is empty.<br />'.$msg.'</div>';
 

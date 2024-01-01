@@ -1,0 +1,44 @@
+Docs      : https://www.luigifab.fr/openmage/sentry
+Tracker   : https://github.com/luigifab/openmage-sentry
+Composer  : https://packagist.org/packages/luigifab/openmage-sentry
+Module    : Luigifab/Sentry (fork)
+License   : OSL 3 (https://opensource.org/licenses/osl-3-0-php)
+Copyright : 2012      Jean Roussel <contact~jean-roussel~fr>
+Copyright : 2022-2024 Fabrice Creuzot (luigifab) <code~luigifab~fr>
+Copyright : 2022-2023 Fabrice Creuzot <fabrice~cellublue~com>
+
+
+
+ALL FILES ARE LICENSED UNDER THE TERMS OF THE OSL 3 LICENSE
+THAT BEING SAID SOME FILES COME FROM OTHER PROJECTS AND ARE UNDER OTHER LICENSES (SEE AT THE END OF THIS FILE)
+
+
+
+
+Rewrite
+- none
+Event
+- adminhtml | admin_system_config_changed_section_dev | sentry/client::updateConfig
+Cron
+- none
+Frontend routes
+- none
+Database
+- none
+Files and directories
+- app/etc/modules/Luigifab_Sentry.xml
+- app/code/community/Luigifab/Sentry/
+- app/design/adminhtml/default/default/layout/luigifab/sentry.xml
+- app/design/adminhtml/default/default/template/luigifab/sentry/
+- app/design/frontend/base/default/layout/luigifab/sentry.xml
+- app/design/frontend/base/default/template/luigifab/sentry/
+- js/sentry/
+Required
+- to complete module installation, apply openmage.diff (also apply after updating OpenMage)
+- before updating the module, unapply openmage.diff, update the module, then apply openmage.diff
+
+
+File: /js/sentry/sdk.min.js
+Source: https://github.com/getsentry/sentry-javascript (https://browser.sentry-cdn.com/x.y.z/bundle.es5.min.js)
+Copyright: 2019-2023 Sentry (https://sentry.io/) and individual contributors
+License: MIT (https://opensource.org/licenses/mit)

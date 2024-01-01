@@ -1,0 +1,87 @@
+<?php
+/**
+ * Created D/09/04/2023
+ * Updated S/23/12/2023
+ *
+ * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
+ * Copyright 2022-2024 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
+ * https://github.com/luigifab/openmage-sentry
+ *
+ * This program is free software, you can redistribute it or modify
+ * it under the terms of the Open Software License (OSL 3.0).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but without any warranty, without even the implied warranty of
+ * merchantability or fitness for a particular purpose. See the
+ * Open Software License (OSL 3.0) for more details.
+ */
+
+if (Mage::getStoreConfigFlag('dev/sentry/active') && !empty($dsn = Mage::getStoreConfig('dev/sentry/dsn_js_front'))):
+	$object = $this->helper('core')->isModuleEnabled('Luigifab_Minifier') ? Mage::getDesign() : $this;
+	$tunnel = Mage::getStoreConfig('dev/sentry/tunnel_js_front');
+	// https://docs.sentry.io/platforms/javascript/install/loader/ => doc js/sentry/loader.min.js
+	// https://browser.sentry-cdn.com/7.73.0/bundle.es5.min.js => js/sentry/sdk.min.js
+	$id = explode('//', $dsn);
+	$id = explode('@', $id[1]);
+	$id = $id[0];
+?>
+<?php if (empty($tunnel)): ?>
+ <script src="<?php echo $object->getJsUrl('sentry/sdk.min.js') ?>"></script>
+<?php else: ?>
+ <script type="text/javascript">
+ window.sentryUrl = "<?php echo $object->getJsUrl('sentry/sdk.min.js') ?>";
+ window.sentryDsn = "<?php echo $dsn ?>";
+ window.sentryKey = "<?php echo $id ?>";
+ </script>
+ <script src="<?php echo $object->getJsUrl('sentry/loader.min.js') ?>"></script>
+<?php endif ?>
+<script type="text/javascript">
+Sentry.onLoad(function () {
+ Sentry.init({
+ <?php if (empty($tunnel)): ?>
+  dsn: "<?php echo $dsn ?>",
+ <?php else: ?>
+  tunnel: "<?php echo $tunnel ?>",
+ <?php endif ?>
+  attachStacktrace: 'on',
+  beforeSend(event) {
+   var e;
+   if (!event.contexts) event.contexts = {};
+   e = document.getElementById('city');
+   if (e) event.contexts['city'] = e.value;
+   e = document.getElementById('postcode');
+   if (e) event.contexts['postcode'] = e.value;
+   e = document.querySelector('input[name="country"]:checked');
+   if (e) event.contexts['country'] = e.value;
+   event.contexts['lat'] = self.marklat;
+   event.contexts['lng'] = self.marklng;
+   return event;
+  }
+ });
+ Sentry.setTag('logger', 'shippingmax');
+});
+console.log('Sentry is ready');
+</script>
+<?php else: ////////////////////////// ?>
+<script type="text/javascript">
+console.log('Sentry is disabled');
+<?php if (Mage::getIsDeveloperMode()): ?>
+window.onerror = function (message, url, lineNumber) {
+ try {
+  var elem = document.getElementById('fatalee');
+  if (!elem) {
+   elem = document.createElement('div');
+   elem.setAttribute('style', 'position:fixed; bottom:50px; right:50px; z-index:5555555555; padding:10px; botder-color:2px solid pink; background-color:red; color:white; font-weight:bold;');
+   elem.setAttribute('id', 'fatalee');
+   elem.nb = 0;
+   document.querySelector('body').appendChild(elem);
+  }
+  elem.innerHTML = 'JS ERR '+ (++elem.nb) + ' !';
+ }
+ catch (e) { }
+ return false;
+};
+<?php endif ?>
+</script>
+<?php endif ?>

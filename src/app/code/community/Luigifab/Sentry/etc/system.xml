@@ -1,10 +1,10 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated D/09/04/2023
+ * Updated D/24/12/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
- * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2024 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
  * https://github.com/luigifab/openmage-sentry
  *
@@ -45,56 +45,123 @@
 							<show_in_website>0</show_in_website>
 							<show_in_store>0</show_in_store>
 						</active>
-						<report_all_errors>
-							<label>Report all errors</label>
-							<comment>error_reporting(E_ALL)</comment>
-							<frontend_type>select</frontend_type>
-							<source_model>adminhtml/system_config_source_yesno</source_model>
-							<sort_order>2</sort_order>
-							<show_in_default>1</show_in_default>
-							<show_in_website>0</show_in_website>
-							<show_in_store>0</show_in_store>
-						</report_all_errors>
-						<dsn>
-							<label>DSN for PHP</label>
-							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
-							<sort_order>3</sort_order>
-							<show_in_default>1</show_in_default>
-							<show_in_website>0</show_in_website>
-							<show_in_store>0</show_in_store>
-						</dsn>
-						<dsn_js_admin>
-							<label>DSN for JS ADMIN</label>
-							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
-							<sort_order>4</sort_order>
-							<show_in_default>1</show_in_default>
-							<show_in_website>0</show_in_website>
-							<show_in_store>0</show_in_store>
-						</dsn_js_admin>
-						<dsn_js_front>
-							<label>DSN for JS FRONT</label>
-							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
-							<sort_order>5</sort_order>
-							<show_in_default>1</show_in_default>
-							<show_in_website>1</show_in_website>
-							<show_in_store>1</show_in_store>
-						</dsn_js_front>
 						<logger>
 							<label>Logger name</label>
-							<sort_order>6</sort_order>
+							<sort_order>3</sort_order>
 							<show_in_default>1</show_in_default>
 							<show_in_website>1</show_in_website>
 							<show_in_store>1</show_in_store>
 						</logger>
-						<test>
-							<label>Test DSN for PHP</label>
-							<frontend_type>label</frontend_type>
-							<frontend_model>sentry/test</frontend_model>
-							<sort_order>7</sort_order>
+						<head translate="label">
+							<label>PHP</label>
+							<frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
+							<sort_order>10</sort_order>
 							<show_in_default>1</show_in_default>
 							<show_in_website>0</show_in_website>
 							<show_in_store>0</show_in_store>
-						</test>
+						</head>
+						<dsn>
+							<label>DSN</label>
+							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
+							<sort_order>11</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</dsn>
+						<report_all_errors>
+							<label>Report all errors</label>
+							<comment><![CDATA[<em>error_reporting(E_ALL)</em>]]></comment>
+							<frontend_type>select</frontend_type>
+							<source_model>adminhtml/system_config_source_yesno</source_model>
+							<sort_order>12</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</report_all_errors>
+						<test_php>
+							<label>Test</label>
+							<frontend_type>label</frontend_type>
+							<frontend_model>sentry/test</frontend_model>
+							<sort_order>13</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</test_php>
+						<head_js_admin translate="label">
+							<label>JS ADMIN</label>
+							<frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
+							<sort_order>20</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</head_js_admin>
+						<dsn_js_admin>
+							<label>DSN</label>
+							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
+							<sort_order>21</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</dsn_js_admin>
+						<tunnel_js_admin>
+							<label>tunnel</label>
+							<comment><![CDATA[<a href="https://docs.sentry.io/platforms/javascript/troubleshooting/">doc</a>, example: <code>/sentry</code>]]></comment>
+							<sort_order>22</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</tunnel_js_admin>
+						<custom_js_admin>
+							<label>options</label>
+							<comment><![CDATA[<a href="https://docs.sentry.io/platforms/javascript/configuration/options/">doc</a>, must be JS compliant, <code>%dpn%</code> is replaced by <em>design/package/name</em>, example:<br /><code>allowUrls: /%dpn%\.com|example\.org/,<br />ignoreErrors: ['ResizeObserver loop limit exceeded', 'Failed to fetch'],</code>]]></comment>
+							<frontend_type>textarea</frontend_type>
+							<sort_order>23</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</custom_js_admin>
+						<test_js_admin>
+							<label>Test</label>
+							<frontend_type>label</frontend_type>
+							<frontend_model>sentry/test</frontend_model>
+							<sort_order>24</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>0</show_in_website>
+							<show_in_store>0</show_in_store>
+						</test_js_admin>
+						<head_js_front translate="label">
+							<label>JS FRONT</label>
+							<frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
+							<sort_order>30</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>1</show_in_website>
+							<show_in_store>1</show_in_store>
+						</head_js_front>
+						<dsn_js_front>
+							<label>DSN</label>
+							<comment>http://public:secret@sentry.example.com:9000/pid</comment>
+							<sort_order>31</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>1</show_in_website>
+							<show_in_store>1</show_in_store>
+						</dsn_js_front>
+						<tunnel_js_front>
+							<label>tunnel</label>
+							<comment><![CDATA[<a href="https://docs.sentry.io/platforms/javascript/troubleshooting/">doc</a>, example: <code>/sentry</code>]]></comment>
+							<sort_order>32</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>1</show_in_website>
+							<show_in_store>1</show_in_store>
+						</tunnel_js_front>
+						<custom_js_front>
+							<label>options</label>
+							<comment><![CDATA[<a href="https://docs.sentry.io/platforms/javascript/configuration/options/">doc</a>, must be JS compliant, <code>%dpn%</code> is replaced by <em>design/package/name</em>, example:<br /><code>allowUrls: /%dpn%\.com|example\.org/,<br />ignoreErrors: ['ResizeObserver loop limit exceeded', 'Failed to fetch'],</code>]]></comment>
+							<frontend_type>textarea</frontend_type>
+							<sort_order>32</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>1</show_in_website>
+							<show_in_store>1</show_in_store>
+						</custom_js_front>
 					</fields>
 				</sentry>
 			</groups>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Forked from https://github.com/getsentry/magento-amg-sentry-extension
+ * Created D/09/04/2023
  * Updated J/02/11/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
@@ -17,17 +17,10 @@
  * Open Software License (OSL 3.0) for more details.
 -->
 
-<config>
-	<modules>
-		<Luigifab_Sentry>
-			<active>true</active>
-			<codePool>community</codePool>
-			<depends>
-				<Mage_Core />
-				<Mage_Adminhtml />
-			</depends>
-			<!-- see https://github.com/luigifab/openmage-modules for more information -->
-			<update>https://www.luigifab.fr/openmage/rss.xml</update>
-		</Luigifab_Sentry>
-	</modules>
-</config>
+<layout version="0.1.0">
+	<default>
+		<reference name="before_cssjs">
+			<block type="core/template" name="sentry" template="luigifab/sentry/head.phtml" />
+		</reference>
+	</default>
+</layout>

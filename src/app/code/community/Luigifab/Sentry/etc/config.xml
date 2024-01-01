@@ -1,10 +1,10 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated J/21/09/2023
+ * Updated J/09/11/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
- * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2024 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
  * https://github.com/luigifab/openmage-sentry
  *
@@ -20,7 +20,7 @@
 <config>
 	<modules>
 		<Luigifab_Sentry>
-			<version>2.2.0</version>
+			<version>3.0.0</version>
 		</Luigifab_Sentry>
 	</modules>
 	<global>
@@ -35,6 +35,15 @@
 			</sentry>
 		</models>
 	</global>
+	<frontend>
+		<layout>
+			<updates>
+				<sentry>
+					<file>luigifab/sentry.xml</file>
+				</sentry>
+			</updates>
+		</layout>
+	</frontend>
 	<adminhtml>
 		<events>
 			<admin_system_config_changed_section_dev>
@@ -46,6 +55,13 @@
 				</observers>
 			</admin_system_config_changed_section_dev>
 		</events>
+		<layout>
+			<updates>
+				<sentry>
+					<file>luigifab/sentry.xml</file>
+				</sentry>
+			</updates>
+		</layout>
 	</adminhtml>
 	<default>
 		<dev>

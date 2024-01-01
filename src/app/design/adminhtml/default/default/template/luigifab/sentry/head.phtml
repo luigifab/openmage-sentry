@@ -1,0 +1,82 @@
+<?php
+/**
+ * Created D/09/04/2023
+ * Updated S/23/12/2023
+ *
+ * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
+ * Copyright 2022-2024 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
+ * https://github.com/luigifab/openmage-sentry
+ *
+ * This program is free software, you can redistribute it or modify
+ * it under the terms of the Open Software License (OSL 3.0).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but without any warranty, without even the implied warranty of
+ * merchantability or fitness for a particular purpose. See the
+ * Open Software License (OSL 3.0) for more details.
+ */
+
+if (Mage::getStoreConfigFlag('dev/sentry/active') && !empty($dsn = Mage::getStoreConfig('dev/sentry/dsn_js_admin'))):
+	$object = $this->helper('core')->isModuleEnabled('Luigifab_Minifier') ? Mage::getDesign() : $this;
+	$tunnel = Mage::getStoreConfig('dev/sentry/tunnel_js_admin');
+	// https://docs.sentry.io/platforms/javascript/install/loader/ => doc js/sentry/loader.min.js
+	// https://browser.sentry-cdn.com/7.73.0/bundle.es5.min.js => js/sentry/sdk.min.js
+	$id = explode('//', $dsn);
+	$id = explode('@', $id[1]);
+	$id = $id[0];
+?>
+<?php if (empty($tunnel)): ?>
+ <script src="<?php echo $object->getJsUrl('sentry/sdk.min.js') ?>"></script>
+<?php else: ?>
+ <script type="text/javascript">
+ window.sentryUrl = "<?php echo $object->getJsUrl('sentry/sdk.min.js') ?>";
+ window.sentryDsn = "<?php echo $dsn ?>";
+ window.sentryKey = "<?php echo $id ?>";
+ </script>
+ <script src="<?php echo $object->getJsUrl('sentry/loader.min.js') ?>"></script>
+<?php endif ?>
+<script type="text/javascript">
+Sentry.onLoad(function () {
+ Sentry.init({
+ <?php if (empty($tunnel)): ?>
+  dsn: "<?php echo $dsn ?>",
+ <?php else: ?>
+  tunnel: "<?php echo $tunnel ?>",
+ <?php endif ?>
+ <?php if (!empty($config = Mage::getStoreConfig('dev/sentry/custom_js_admin'))): ?>
+  <?php echo str_replace('%dpn%', Mage::getStoreConfig('design/package/name'), $config) ?>
+ <?php endif ?>
+  attachStacktrace: 'on'
+ });
+ Sentry.setTag("logger", "<?php echo Mage::getStoreConfig('dev/sentry/logger') ?>");
+ <?php if (Mage::getSingleton('admin/session')->isLoggedIn()): ?>
+  Sentry.setTag("runtime", "PHP <?php echo PHP_VERSION ?>");
+  Sentry.setTag("engine", "OpenMage <?php echo Mage::getOpenMageVersion() ?>");
+  Sentry.setUser({ id: "<?php echo Mage::getSingleton('admin/session')->getUser()->getUsername() ?>" });
+ <?php endif ?>
+});
+console.log('Sentry is ready');
+</script>
+<?php else: ////////////////////////// ?>
+<script type="text/javascript">
+console.log('Sentry is disabled');
+<?php if (Mage::getIsDeveloperMode()): ?>
+window.onerror = function (message, url, lineNumber) {
+ try {
+  var elem = document.getElementById('fatalee');
+  if (!elem) {
+   elem = document.createElement('div');
+   elem.setAttribute('style', 'position:fixed; bottom:50px; right:50px; z-index:5555555555; padding:10px; botder-color:2px solid pink; background-color:red; color:white; font-weight:bold;');
+   elem.setAttribute('id', 'fatalee');
+   elem.nb = 0;
+   document.querySelector('body').appendChild(elem);
+  }
+  elem.innerHTML = 'JS ERR '+ (++elem.nb) + ' !';
+ }
+ catch (e) { }
+ return false;
+};
+<?php endif ?>
+</script>
+<?php endif ?>

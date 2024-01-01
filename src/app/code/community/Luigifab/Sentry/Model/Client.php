@@ -1,10 +1,10 @@
 <?php
 /**
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated J/05/10/2023
+ * Updated S/23/12/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
- * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2024 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
  * https://github.com/luigifab/openmage-sentry
  *
@@ -39,7 +39,7 @@ class Luigifab_Sentry_Model_Client {
 			else if (($error = $this->initSentry(true)) !== true) {
 				$session->addError('Can not connect to Sentry! '.$error);
 			}
-			else if (!empty(Mage::app()->getRequest()->getPost('dev_sentry_test'))) {
+			else if (!empty(Mage::app()->getRequest()->getPost('dev_sentry_test_php'))) {
 				$result = $this->captureException(new Exception('Sentry test from OpenMage backend'), null, ['source' => 'sentry:updateConfig']);
 				$session->addNotice('Test sent to Sentry, eventId: '.print_r($result, true));
 			}
@@ -262,7 +262,7 @@ class Luigifab_Sentry_Model_Client {
 			E_DEPRECATED        => ['info',    'Deprecated functionality'],
 		];
 
-		$type = empty($exception->getCode()) ? get_class($exception) : $exception->getCode();
+		$type = empty($exception->getCode()) ? get_class($exception) : (string) $exception->getCode();
 		$hasSeverity = method_exists($exception, 'getSeverity');
 		if ($hasSeverity)
 			$type = $levels[$exception->getSeverity()][1] ?? $type;
@@ -328,6 +328,9 @@ class Luigifab_Sentry_Model_Client {
 		if (empty($options['tags']['runtime']))
 			$options['tags']['runtime'] = 'PHP '.PHP_VERSION;
 
+		if (empty($options['tags']['engine']))
+			$options['tags']['engine'] = 'OpenMage '.Mage::getOpenMageVersion();
+
 		$this->_serverUrl = sprintf('%s://%s%s/api/store/', $scheme, $netloc, $path);
 		$this->_secretKey = (string) $password;
 		$this->_publicKey = (string) $username;
@@ -366,7 +369,7 @@ class Luigifab_Sentry_Model_Client {
 			'project'     => $this->_project,
 			'site'        => $_SERVER['SERVER_NAME'] ?? '',
 			'sentry.interfaces.Http' => [
-				'method'       => $_SERVER['REQUEST_METHOD'] ?? '',
+				'method'       => $_SERVER['REQUEST_METHOD'] ?? 'CLI',
 				'url'          => $this->getCurrentUrl(),
 				'query_string' => $_SERVER['QUERY_STRNG'] ?? '',
 				'data'         => $_POST,
@@ -400,8 +403,7 @@ class Luigifab_Sentry_Model_Client {
 		if (!empty($user = $this->getUsername()))
 			$data['tags']['username'] = $user;
 
-		$result = $this->send($this->apply($this->removeInvalidUtf8($data)));
-
+		$this->send($this->apply($this->removeInvalidUtf8($data)));
 		return $eventId;
 	}
 
@@ -420,11 +422,9 @@ class Luigifab_Sentry_Model_Client {
 
 	private function sendRemote($url, $data, $headers) {
 
-		$parts = parse_url($url);
+		$parts = (array) parse_url($url); // (yes)
 		$parts['netloc'] = $parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : null);
 
-		// PHP 8.0+ for $parts
-		// Value should be one of: "scheme", "host", "port", "user", "pass", "query", "path", "fragment"
 		if ($parts['scheme'] == 'udp') {
 
 			if (is_array($this->_reports)) {
@@ -468,7 +468,7 @@ class Luigifab_Sentry_Model_Client {
 		curl_setopt($curl, CURLOPT_VERBOSE, false);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // yes
-		$exec = curl_exec($curl);
+		curl_exec($curl);
 		$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 		curl_close($curl);
 
@@ -569,8 +569,8 @@ class Luigifab_Sentry_Model_Client {
 
 				$absPath  = '';
 				$fileName = '[Anonymous function]';
-				$context['prefix'] = '';
-				$context['suffix'] = '';
+				$context['prefix'] = [];
+				$context['suffix'] = [];
 				$context['filename'] = $fileName;
 				$context['lineno'] = 0;
 			}
@@ -638,8 +638,8 @@ class Luigifab_Sentry_Model_Client {
 				$frame['line'] = $line;
 			else if ($lineNo - $cur_lineno > 0 && $lineNo - $cur_lineno < 3)
 				$frame['prefix'][] = $line;
-			else if ($lineNo - $cur_lineno > -3 && $lineNo - $cur_lineno < 0)
-				$frame['suffix'][] = $line;
+			else if ($line && $lineNo - $cur_lineno > -3 && $lineNo - $cur_lineno < 0)
+				$frame['suffix'][] = $line; // when line is false, it can be eof, so ignore it
 		}
 		fclose($fh);
 
@@ -668,10 +668,10 @@ class Luigifab_Sentry_Model_Client {
 		if (is_object($value))
 			return '#OBJECT! '.get_class($value);
 
-		if (preg_match('/^\d{16}$/', $value))
+		if (preg_match('/^\d{16}$/', (string) $value))
 			return '********';
 
-		if (preg_match('/(authorization|password|passwd|secret)/i', $key))
+		if (preg_match('/(authorization|password|passwd|secret)/i', (string) $key))
 			return '********';
 
 		return $value;

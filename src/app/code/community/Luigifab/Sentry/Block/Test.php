@@ -1,10 +1,10 @@
 <?php
 /**
  * Created J/08/12/2022
- * Updated J/05/01/2023
+ * Updated J/02/11/2023
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
- * Copyright 2022-2023 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2024 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
  * https://github.com/luigifab/openmage-sentry
  *
@@ -25,6 +25,10 @@ class Luigifab_Sentry_Block_Test extends Mage_Adminhtml_Block_System_Config_Form
 	}
 
 	protected function _getElementHtml(Varien_Data_Form_Element_Abstract $element) {
-		return sprintf('<input type="checkbox" name="%s" id="%s" />', $element->getHtmlId(), $element->getHtmlId());
+
+		if (str_contains($element->getHtmlId(), 'php'))
+			return sprintf('<input type="checkbox" name="%s" id="%s" />', $element->getHtmlId(), $element->getHtmlId());
+
+		return sprintf('<button type="button" name="%s" id="%s" onclick="test();">Test</button>', $element->getHtmlId(), $element->getHtmlId());
 	}
 }
