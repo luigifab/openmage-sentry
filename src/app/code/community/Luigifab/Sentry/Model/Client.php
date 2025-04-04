@@ -1,10 +1,10 @@
 <?php
 /**
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated S/23/12/2023
+ * Updated D/09/03/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
- * Copyright 2022-2024 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
+ * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
  * https://github.com/luigifab/openmage-sentry
  *
@@ -257,10 +257,12 @@ class Luigifab_Sentry_Model_Client {
 			E_USER_ERROR        => ['error',   'User Error'],
 			E_USER_WARNING      => ['warning', 'User Warning'],
 			E_USER_NOTICE       => ['info',    'User Notice'],
-			E_STRICT            => ['info',    'Strict Notice'],
 			E_RECOVERABLE_ERROR => ['error',   'Recoverable Error'],
 			E_DEPRECATED        => ['info',    'Deprecated functionality'],
 		];
+
+		if (PHP_VERSION_ID < 80400)
+			$levels['E_STRICT']  = ['info', 'Strict Notice'];
 
 		$type = empty($exception->getCode()) ? get_class($exception) : (string) $exception->getCode();
 		$hasSeverity = method_exists($exception, 'getSeverity');
@@ -331,7 +333,8 @@ class Luigifab_Sentry_Model_Client {
 		if (empty($options['tags']['engine']))
 			$options['tags']['engine'] = 'OpenMage '.Mage::getOpenMageVersion();
 
-		$this->_serverUrl = sprintf('%s://%s%s/api/store/', $scheme, $netloc, $path);
+		$this->_serverUrl = sprintf('%s://%s%s/api/%s/store/', $scheme, $netloc, $path, $project);
+		//$this->_serverUrl = sprintf('%s://%s%s/api/store/', $scheme, $netloc, $path); // not working anymore
 		$this->_secretKey = (string) $password;
 		$this->_publicKey = (string) $username;
 		$this->_project   = (int) $project;

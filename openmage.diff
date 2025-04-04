@@ -1,5 +1,128 @@
 # multiparts diff for OpenMage 20.3.0
-# first this is 3679
+# ##########################################################################################################################################
+# this is OpenMage PR 3596
+diff --git a/app/code/core/Mage/Core/Block/Abstract.php b/app/code/core/Mage/Core/Block/Abstract.php
+index f33b14a031e..7d25687b626 100644
+--- a/app/code/core/Mage/Core/Block/Abstract.php
++++ b/app/code/core/Mage/Core/Block/Abstract.php
+@@ -188,6 +188,13 @@
+      */
+     protected $_app;
+ 
++    /**
++     * To not render the same block multiple times with getChildHtml()
++     *
++     * @var bool
++     */
++    protected $_isRendered = false;
++
+     /**
+      * Initialize factory instance
+      *
+@@ -580,7 +587,9 @@
+             }
+             $out = '';
+             foreach ($children as $child) {
+-                $out .= $this->_getChildHtml($child->getBlockAlias(), $useCache);
++                if (!$child->isRendered()) {
++                    $out .= $this->_getChildHtml($child->getBlockAlias(), $useCache);
++                }
+             }
+             return $out;
+         } else {
+@@ -914,6 +923,8 @@
+         if (Mage::getStoreConfig('advanced/modules_disable_output/' . $this->getModuleName())) {
+             return '';
+         }
++
++        $this->_isRendered = true;
+         $html = $this->_loadCache();
+         if ($html === false) {
+             $translate = Mage::getSingleton('core/translate');
+@@ -1533,4 +1544,14 @@
+     {
+         return $this->_getApp()->getFrontController()->getRequest()->isSecure();
+     }
++
++    /**
++     * Flag
++     *
++     * @return bool
++     */
++    public function isRendered()
++    {
++        return $this->_isRendered;
++    }
+ }
+diff --git a/app/design/adminhtml/default/default/layout/main.xml b/app/design/adminhtml/default/default/layout/main.xml
+index b2a2ef42283..be57ffdc0cd 100644
+--- a/app/design/adminhtml/default/default/layout/main.xml
++++ b/app/design/adminhtml/default/default/layout/main.xml
+@@ -89,6 +89,7 @@
+                 <action method="addItem"><type>js</type><name>mage/adminhtml/wysiwyg/tinymce/setup.js</name><params/><if/><condition>can_load_tiny_mce</condition></action>
+ 
+                 <block type="core/html_calendar" name="head.calendar" as="calendar" template="page/js/calendar.phtml"/>
++                <block type="adminhtml/text_list" name="before_cssjs"/>
+             </block>
+ 
+             <block type="adminhtml/page_notices" name="global_notices" as="global_notices" template="page/notices.phtml" />
+diff --git a/app/design/adminhtml/default/default/template/page/head.phtml b/app/design/adminhtml/default/default/template/page/head.phtml
+index 741efe119b9..2d92574d2e4 100644
+--- a/app/design/adminhtml/default/default/template/page/head.phtml
++++ b/app/design/adminhtml/default/default/template/page/head.phtml
+@@ -27,10 +27,11 @@
+     var BASE_URL = '<?php echo $this->getUrl('*') ?>';
+     var SKIN_URL = '<?php echo $this->jsQuoteEscape($this->getSkinUrl()) ?>';
+     var FORM_KEY = '<?php echo $this->getFormKey() ?>';
+-    <?php # BC: cast to INT in case of non-existing method getLoadingTimeout() in 3rd-party code?>
++    <?php // BC: cast to INT in case of non-existing method getLoadingTimeout() in 3rd-party code ?>
+     var LOADING_TIMEOUT = <?php echo (int)$this->getLoadingTimeout() ?>;
+ </script>
+ 
++<?php echo $this->getChildHtml('before_cssjs') ?>
+ <?php echo $this->getCssJsHtml() ?>
+ 
+ <?php if ($this->getCanLoadExtJs()): ?>
+@@ -50,4 +51,4 @@
+ </script>
+ 
+ <?php echo $this->helper('core/js')->getTranslatorScript() ?>
+-<?php echo $this->getChildHtml(); ?>
++<?php echo $this->getChildHtml() ?>
+diff --git a/app/design/frontend/base/default/layout/page.xml b/app/design/frontend/base/default/layout/page.xml
+index 82da2714fc3..82b79528a7b 100644
+--- a/app/design/frontend/base/default/layout/page.xml
++++ b/app/design/frontend/base/default/layout/page.xml
+@@ -37,12 +37,12 @@
+                 <action method="addJs"><script>varien/menu.js</script></action>
+                 <action method="addJs"><script>mage/translate.js</script></action>
+                 <action method="addJs"><script>mage/cookies.js</script></action>
+-
+-                <block type="page/js_cookie" name="js_cookies" template="page/js/cookie.phtml"/>
+-
+                 <action method="addCss"><stylesheet>css/styles.css</stylesheet></action>
+                 <action method="addCss"><stylesheet>css/widgets.css</stylesheet></action>
+                 <action method="addCss"><stylesheet>css/print.css</stylesheet><params>media="print"</params></action>
++
++                <block type="page/js_cookie" name="js_cookies" template="page/js/cookie.phtml"/>
++                <block type="core/text_list" name="before_cssjs"/>
+             </block>
+ 
+             <block type="core/text_list" name="after_body_start" as="after_body_start" translate="label">
+diff --git a/app/design/frontend/base/default/template/page/html/head.phtml b/app/design/frontend/base/default/template/page/html/head.phtml
+index e8b95fc628b..7c09e1e722b 100644
+--- a/app/design/frontend/base/default/template/page/html/head.phtml
++++ b/app/design/frontend/base/default/template/page/html/head.phtml
+@@ -25,6 +25,7 @@
+ <meta name="robots" content="<?php echo htmlspecialchars($this->getRobots()) ?>" />
+ <link rel="icon" href="<?php echo $this->getFaviconFile(); ?>" type="image/x-icon" />
+ <link rel="shortcut icon" href="<?php echo $this->getFaviconFile(); ?>" type="image/x-icon" />
++<?php echo $this->getChildHtml('before_cssjs') ?>
+ <?php echo $this->getCssJsHtml() ?>
+ <?php echo $this->getChildHtml() ?>
+ <?php echo $this->helper('core/js')->getTranslatorScript() ?>
+# ##########################################################################################################################################
+# this is OpenMage PR 3679
 diff --git a/app/Mage.php b/app/Mage.php
 index dee273c2d3e..a478f86cb56 100644
 --- a/app/Mage.php
@@ -184,8 +307,8 @@ index fa1ee0b18c8..8ef37a6bfe5 100644
          }
  
          if ($schedule->getIsError()) {
-# multiparts diff for OpenMage 20.3.0
-# secondly this is for sentry
+# ##########################################################################################################################################
+# this is for Sentry module
 diff --git a/app/Mage.php b/app/Mage.php
 index 1f50465e73..65ed72cb2b 100644
 --- a/app/Mage.php
