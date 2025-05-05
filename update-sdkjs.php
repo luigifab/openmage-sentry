@@ -46,7 +46,7 @@ function sendRequest(string $url) {
 }
 
 // @see https://github.com/getsentry/sentry-javascript
-// https://browser.sentry-cdn.com/9.10.1/bundle.min.js => js/sentry/sdk.min.js
+// https://browser.sentry-cdn.com/9.14.0/bundle.min.js => js/sentry/sdk.min.js
 $results = sendRequest('https://api.github.com/repos/getsentry/sentry-javascript/releases');
 if (mb_strpos($results, '"tag_name": "') !== false) {
 
