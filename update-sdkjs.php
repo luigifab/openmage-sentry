@@ -1,7 +1,7 @@
 <?php
 /**
  * Created J/02/11/2023
- * Updated L/10/03/2025
+ * Updated L/28/07/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -46,7 +46,7 @@ function sendRequest(string $url) {
 }
 
 // @see https://github.com/getsentry/sentry-javascript
-// https://browser.sentry-cdn.com/9.14.0/bundle.min.js => js/sentry/sdk.min.js
+// https://browser.sentry-cdn.com/9.43.0/bundle.min.js => js/sentry/sdk.min.js
 $results = sendRequest('https://api.github.com/repos/getsentry/sentry-javascript/releases');
 if (mb_strpos($results, '"tag_name": "') !== false) {
 

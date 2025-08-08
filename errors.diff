@@ -1,8 +1,9 @@
-diff --git a/web/errors/processor.php b/web/errors/processor.php
+# diff for OpenMage 20.15.0
+diff --git a/errors/processor.php b/errors/processor.php
 index 9bee05b380..bec9aa06fb 100644
---- a/web/errors/processor.php
-+++ b/web/errors/processor.php
-@@ -388,7 +388,7 @@ class Error_Processor
+--- a/errors/processor.php
++++ b/errors/processor.php
+@@ -368,7 +368,7 @@ class Error_Processor
      /**
       * @throws Exception
       */
@@ -10,8 +11,8 @@ index 9bee05b380..bec9aa06fb 100644
 +    public function saveReport(array $reportData, $t = null)
      {
          $this->reportData = $reportData;
-         $this->reportId   = abs((int)(microtime(true) * random_int(100, 1000)));
-@@ -408,6 +408,22 @@ class Error_Processor
+         $this->reportId   = abs((int) (microtime(true) * random_int(100, 1000)));
+@@ -398,6 +398,22 @@ class Error_Processor
          }
          $this->_setReportUrl();
  
@@ -34,10 +35,10 @@ index 9bee05b380..bec9aa06fb 100644
          if (headers_sent()) {
              echo '<script type="text/javascript">';
              echo "window.location.href = encodeURI('{$this->reportUrl}');";
-diff --git a/web/errors/report.php b/web/errors/report.php
+diff --git a/errors/report.php b/errors/report.php
 index 6e73080bec..2fdfa6619d 100644
---- a/web/errors/report.php
-+++ b/web/errors/report.php
+--- a/errors/report.php
++++ b/errors/report.php
 @@ -26,7 +26,7 @@ require_once 'processor.php';
  $processor = new Error_Processor();
  

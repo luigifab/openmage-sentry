@@ -40,5 +40,5 @@ Required
 
 File: /js/sentry/sdk.min.js
 Source: https://github.com/getsentry/sentry-javascript (https://browser.sentry-cdn.com/x.y.z/bundle.min.js)
-Copyright: 2019-2025 Sentry (https://sentry.io/) and indiv idual contributors
+Copyright: 2019-2025 Sentry (https://sentry.io/) and individual contributors
 License: MIT (https://opensource.org/licenses/mit)

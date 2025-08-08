@@ -1,11 +1,11 @@
-# multiparts diff for OpenMage 20.3.0
+# multiparts diff for OpenMage 20.15.0
 # ##########################################################################################################################################
 # this is OpenMage PR 3596
 diff --git a/app/code/core/Mage/Core/Block/Abstract.php b/app/code/core/Mage/Core/Block/Abstract.php
 index f33b14a031e..7d25687b626 100644
 --- a/app/code/core/Mage/Core/Block/Abstract.php
 +++ b/app/code/core/Mage/Core/Block/Abstract.php
-@@ -188,6 +188,13 @@
+@@ -183,6 +183,13 @@
       */
      protected $_app;
  
@@ -18,7 +18,7 @@ index f33b14a031e..7d25687b626 100644
 +
      /**
       * Initialize factory instance
-      *
+      */
 @@ -580,7 +587,9 @@
              }
              $out = '';
@@ -39,9 +39,9 @@ index f33b14a031e..7d25687b626 100644
          $html = $this->_loadCache();
          if ($html === false) {
              $translate = Mage::getSingleton('core/translate');
-@@ -1533,4 +1544,14 @@
-     {
-         return $this->_getApp()->getFrontController()->getRequest()->isSecure();
+@@ -1591,4 +1601,14 @@
+ 
+         return Mage::helper($helperAlias)->isModuleOutputEnabled($moduleName);
      }
 +
 +    /**
@@ -70,13 +70,14 @@ diff --git a/app/design/adminhtml/default/default/template/page/head.phtml b/app
 index 741efe119b9..2d92574d2e4 100644
 --- a/app/design/adminhtml/default/default/template/page/head.phtml
 +++ b/app/design/adminhtml/default/default/template/page/head.phtml
-@@ -27,10 +27,11 @@
+@@ -20,11 +20,12 @@
      var BASE_URL = '<?php echo $this->getUrl('*') ?>';
-     var SKIN_URL = '<?php echo $this->jsQuoteEscape($this->getSkinUrl()) ?>';
+     var SKIN_URL = '<?php echo $this->getSkinUrl() ?>';
      var FORM_KEY = '<?php echo $this->getFormKey() ?>';
 -    <?php # BC: cast to INT in case of non-existing method getLoadingTimeout() in 3rd-party code?>
 +    <?php // BC: cast to INT in case of non-existing method getLoadingTimeout() in 3rd-party code ?>
      var LOADING_TIMEOUT = <?php echo (int)$this->getLoadingTimeout() ?>;
+ //]]>
  </script>
  
 +<?php echo $this->getChildHtml('before_cssjs') ?>
@@ -113,10 +114,10 @@ diff --git a/app/design/frontend/base/default/template/page/html/head.phtml b/ap
 index e8b95fc628b..7c09e1e722b 100644
 --- a/app/design/frontend/base/default/template/page/html/head.phtml
 +++ b/app/design/frontend/base/default/template/page/html/head.phtml
-@@ -25,6 +25,7 @@
+@@ -17,6 +17,7 @@
+ <meta name="keywords" content="<?php echo htmlspecialchars($this->getKeywords()) ?>" />
  <meta name="robots" content="<?php echo htmlspecialchars($this->getRobots()) ?>" />
  <link rel="icon" href="<?php echo $this->getFaviconFile(); ?>" type="image/x-icon" />
- <link rel="shortcut icon" href="<?php echo $this->getFaviconFile(); ?>" type="image/x-icon" />
 +<?php echo $this->getChildHtml('before_cssjs') ?>
  <?php echo $this->getCssJsHtml() ?>
  <?php echo $this->getChildHtml() ?>
@@ -148,7 +149,7 @@ index dee273c2d3e..a478f86cb56 100644
 +                $file = $e->getFile();
 +                $line = $e->getLine();
 +                if (!empty($_SERVER['MAGE_VSCODE_LINKS']) || !empty($_ENV['MAGE_VSCODE_LINKS'])) {
-+                    // https://code.visualstudio.com/docs/editor/command-line#_opening-vs-code-with-urls
++                    // @see https://code.visualstudio.com/docs/editor/command-line#_opening-vs-code-with-urls
 +                    print preg_replace_callback('#(\#\d+ )([^(]+)\((\d+)\): #', static function ($data) {
 +                        return
 +                            $data[1] .
@@ -157,7 +158,7 @@ index dee273c2d3e..a478f86cb56 100644
 +                    }, $e->getTraceAsString()) . "\n";
 +                    print '  thrown in <a href="vscode://file/' . $file . ':' . $line . '"><b>' . $file . '</b></a>';
 +                } elseif (!empty($_SERVER['MAGE_PHPSTORM_LINKS']) || !empty($_ENV['MAGE_PHPSTORM_LINKS'])) {
-+                    // phpstorm doc
++                    // @todo phpstorm doc
 +                    print preg_replace_callback('#(\#\d+ )([^(]+)\((\d+)\): #', static function ($data) {
 +                        return
 +                            $data[1] .
@@ -166,7 +167,7 @@ index dee273c2d3e..a478f86cb56 100644
 +                    }, $e->getTraceAsString()) . "\n";
 +                    print '  thrown in <a href="phpstorm://open?url=file:/' . $file . '&line=' . $line . '"><b>' . $file . '</b></a>';
 +                } elseif (!empty($_SERVER['MAGE_OPENFILEEDITOR_LINKS']) || !empty($_ENV['MAGE_OPENFILEEDITOR_LINKS'])) {
-+                    // https://github.com/luigifab/webext-openfileeditor
++                    // @see https://github.com/luigifab/webext-openfileeditor
 +                    print preg_replace_callback('#(\#\d+ )([^(]+)\((\d+)\): #', static function ($data) {
 +                        return
 +                            $data[1] .
@@ -189,10 +190,10 @@ index dee273c2d3e..a478f86cb56 100644
          } else {
              $reportData = [
 -                (!empty($extra) ? $extra . "\n\n" : '') . $e->getMessage(),
--                $e->getTraceAsString()
+-                $e->getTraceAsString(),
 +                (empty($extra) ? '' : $extra . "\n\n") . get_class($e) . ': ' . $e->getMessage(),
 +                $e->getTraceAsString() . "\n" .
-+                    '  thrown in ' . $e->getFile() . ' on line ' . $e->getLine()
++                    '  thrown in ' . $e->getFile() . ' on line ' . $e->getLine(),
              ];
 -
              // retrieve server data
@@ -222,7 +223,7 @@ diff --git a/app/code/core/Mage/Core/Block/Template.php b/app/code/core/Mage/Cor
 index 2598f3304a1..18725c4c0f8 100644
 --- a/app/code/core/Mage/Core/Block/Template.php
 +++ b/app/code/core/Mage/Core/Block/Template.php
-@@ -253,15 +253,50 @@
+@@ -245,15 +245,50 @@
  <div style="position:relative; border:1px dotted {$cacheHintStatusColor}; margin:6px 2px; padding:18px 2px 2px 2px; zoom:1;">
  <div style="position:absolute; left:0; top:0; padding:2px 5px; background:{$cacheHintStatusColor}; color:white; font:normal 11px Arial;
  text-align:left !important; z-index:998;text-transform: none;" onmouseover="this.style.zIndex='999'"
@@ -230,20 +231,20 @@ index 2598f3304a1..18725c4c0f8 100644
 +onmouseout="this.style.zIndex='998'" title="{$fileName}">
  HTML;
 +            if (!empty($_SERVER['MAGE_VSCODE_LINKS']) || !empty($_ENV['MAGE_VSCODE_LINKS'])) {
-+                // https://code.visualstudio.com/docs/editor/command-line#_opening-vs-code-with-urls
++                // @see https://code.visualstudio.com/docs/editor/command-line#_opening-vs-code-with-urls
 +                echo '<a href="vscode://file/' . $this->_viewDir . DS . $fileName . '">' . $fileName . '</a></div>';
 +            } elseif (!empty($_SERVER['MAGE_PHPSTORM_LINKS']) || !empty($_ENV['MAGE_PHPSTORM_LINKS'])) {
-+                // phpstorm doc
++                // @todo phpstorm doc
 +                echo '<a href="phpstorm://open?url=file:/' . $this->_viewDir . DS . $fileName . '">' . $fileName . '</a></div>';
 +            } elseif (!empty($_SERVER['MAGE_OPENFILEEDITOR_LINKS']) || !empty($_ENV['MAGE_OPENFILEEDITOR_LINKS'])) {
-+                // https://github.com/luigifab/webext-openfileeditor
++                // @see https://github.com/luigifab/webext-openfileeditor
 +                echo '<span class="openfileeditor" data-file="' . $this->_viewDir . DS . $fileName . '">' . $fileName . '</span></div>';
 +            } else {
 +                echo $fileName . '</div>';
 +            }
 +
              if (Mage::app()->getStore()->isAdmin() ? self::$_showTemplateHintsBlocksAdmin : self::$_showTemplateHintsBlocks) {
-                 $thisClass = get_class($this);
+                 $thisClass = static::class;
                  echo <<<HTML
  <div style="position:absolute; right:0; top:0; padding:2px 5px; background:{$cacheHintStatusColor}; color:blue; font:normal 11px Arial;
  text-align:left !important; z-index:998;text-transform: none;" onmouseover="this.style.zIndex='999'" onmouseout="this.style.zIndex='998'"
@@ -254,17 +255,17 @@ index 2598f3304a1..18725c4c0f8 100644
 +                    if (!empty($_SERVER['MAGE_VSCODE_LINKS']) || !empty($_ENV['MAGE_VSCODE_LINKS'])) {
 +                        $reflector = new ReflectionClass($thisClass);
 +                        $fileClass = $reflector->getFileName();
-+                        // https://code.visualstudio.com/docs/editor/command-line#_opening-vs-code-with-urls
++                        // @see https://code.visualstudio.com/docs/editor/command-line#_opening-vs-code-with-urls
 +                        echo '<a href="vscode://file/' . $fileClass . '">' . $thisClass . '</a></div>';
 +                    } elseif (!empty($_SERVER['MAGE_PHPSTORM_LINKS']) || !empty($_ENV['MAGE_PHPSTORM_LINKS'])) {
 +                        $reflector = new ReflectionClass($thisClass);
 +                        $fileClass = $reflector->getFileName();
-+                        // phpstorm doc
++                        // @todo phpstorm doc
 +                        echo '<a href="phpstorm://open?url=file:/' . $fileClass . '">' . $thisClass . '</a></div>';
 +                    } elseif (!empty($_SERVER['MAGE_OPENFILEEDITOR_LINKS']) || !empty($_ENV['MAGE_OPENFILEEDITOR_LINKS'])) {
 +                        $reflector = new ReflectionClass($thisClass);
 +                        $fileClass = $reflector->getFileName();
-+                        // https://github.com/luigifab/webext-openfileeditor
++                        // @see https://github.com/luigifab/webext-openfileeditor
 +                        echo '<span class="openfileeditor" data-file="' . $fileClass . '">' . $thisClass . '</span></div>';
 +                    } else {
 +                        echo $thisClass . '</div>';
@@ -279,9 +280,9 @@ diff --git a/app/code/core/Mage/Core/functions.php b/app/code/core/Mage/Core/fun
 index d643769e7f2..79cbc410642 100644
 --- a/app/code/core/Mage/Core/functions.php
 +++ b/app/code/core/Mage/Core/functions.php
-@@ -179,11 +179,10 @@
-             break;
-     }
+@@ -145,11 +145,10 @@
+         default => $errorMessage .= "Unknown error ($errno)",
+     };
  
 -    $errorMessage .= ": {$errstr}  in {$errfile} on line {$errline}";
      if (Mage::getIsDeveloperMode()) {
@@ -290,9 +291,9 @@ index d643769e7f2..79cbc410642 100644
      } else {
 -        Mage::log($errorMessage, Zend_Log::ERR);
 +        Mage::log($errorMessage . ': ' . $errstr . ' in ' . $errfile . ' on line ' . $errline, Zend_Log::ERR);
+         return null;
      }
  }
- 
 diff --git a/app/code/core/Mage/Cron/Model/Observer.php b/app/code/core/Mage/Cron/Model/Observer.php
 index fa1ee0b18c8..8ef37a6bfe5 100644
 --- a/app/code/core/Mage/Cron/Model/Observer.php
@@ -350,8 +351,8 @@ index 1f50465e73..65ed72cb2b 100644
  
      /**
 @@ -975,10 +984,17 @@
-      *
-      * @param Throwable $e
+     /**
+      * Display exception
       */
 -    public static function printException(Throwable $e, $extra = '')
 +    public static function printException(Throwable $e, $extra = '', $source = '')
@@ -364,7 +365,7 @@ index 1f50465e73..65ed72cb2b 100644
 +
          if (self::$_isDeveloperMode) {
              if (PHP_SAPI != 'cli') {
-+                @http_response_code(500); // @todo  this prevent display of ajax grid error
++                @http_response_code(500); // @todo this prevent display of ajax grid error
                  print '<pre style="white-space:pre-wrap;">';
              }
              if (!empty($extra)) {
@@ -380,7 +381,7 @@ index 1f50465e73..65ed72cb2b 100644
              $reportData = [
                  (empty($extra) ? '' : $extra . "\n\n") . get_class($e) . ': ' . $e->getMessage(),
                  $e->getTraceAsString() . "\n" .
--                    '  thrown in ' . $e->getFile() . ' on line ' . $e->getLine()
+-                    '  thrown in ' . $e->getFile() . ' on line ' . $e->getLine(),
 +                    '  thrown in ' . $e->getFile() . ' on line ' . $e->getLine() . "\n" .
 +                    '  catched by Mage::printException()' . $source . ' at ' . date('c')
              ];
@@ -417,12 +418,12 @@ diff --git a/app/code/core/Mage/Core/Model/App.php b/app/code/core/Mage/Core/Mod
 index d44240102c..52c41ab26f 100644
 --- a/app/code/core/Mage/Core/Model/App.php
 +++ b/app/code/core/Mage/Core/Model/App.php
-@@ -516,9 +516,17 @@
+@@ -507,9 +507,17 @@
              $this->_checkCookieStore($scopeType);
              $this->_checkGetStore($scopeType);
          }
--        $this->_useSessionInUrl = $this->getStore()->getConfig(
--            Mage_Core_Model_Session_Abstract::XML_PATH_USE_FRONTEND_SID
+-        $this->_useSessionInUrl = (bool) $this->getStore()->getConfig(
+-            Mage_Core_Model_Session_Abstract::XML_PATH_USE_FRONTEND_SID,
 -        );
 +
 +        // @see https://github.com/luigifab/openmage-sentry
@@ -433,7 +434,7 @@ index d44240102c..52c41ab26f 100644
 +            $sentry->initHandler($store);
 +        }
 +
-+        $this->_useSessionInUrl = $store->getConfig(Mage_Core_Model_Session_Abstract::XML_PATH_USE_FRONTEND_SID);
++        $this->_useSessionInUrl = (bool) $store->getConfig(Mage_Core_Model_Session_Abstract::XML_PATH_USE_FRONTEND_SID);
 +
          return $this;
      }
@@ -467,11 +468,11 @@ index a9ce749a80..5b59931b5e 100644
 --- a/app/code/core/Mage/Core/functions.php
 +++ b/app/code/core/Mage/Core/functions.php
 @@ -168,7 +168,7 @@
-     }
+     };
  
      if (Mage::getIsDeveloperMode()) {
 -        Mage::printException(new ErrorException($errorMessage . ' ' . $errstr, 0, $errno, $errfile, $errline));
 +        Mage::printException(new ErrorException($errorMessage . ' ' . $errstr, 0, $errno, $errfile, $errline), '', ' via mageCoreErrorHandler()');
      } else {
          Mage::log($errorMessage . ': ' . $errstr . ' in ' . $errfile . ' on line ' . $errline, Zend_Log::ERR);
-     }
+         return null;

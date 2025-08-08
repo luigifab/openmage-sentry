@@ -1,7 +1,7 @@
 <?php
 /**
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated D/09/03/2025
+ * Updated L/28/07/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -334,7 +334,6 @@ class Luigifab_Sentry_Model_Client {
 			$options['tags']['engine'] = 'OpenMage '.Mage::getOpenMageVersion();
 
 		$this->_serverUrl = sprintf('%s://%s%s/api/%s/store/', $scheme, $netloc, $path, $project);
-		//$this->_serverUrl = sprintf('%s://%s%s/api/store/', $scheme, $netloc, $path); // not working anymore
 		$this->_secretKey = (string) $password;
 		$this->_publicKey = (string) $username;
 		$this->_project   = (int) $project;
@@ -384,7 +383,7 @@ class Luigifab_Sentry_Model_Client {
 
 		if ((!$stack && $this->_logStacks) || ($stack === true)) {
 			$stack = debug_backtrace();
-			// Drop last stack
+			// drop last stack
 			array_shift($stack);
 		}
 
@@ -517,7 +516,7 @@ class Luigifab_Sentry_Model_Client {
 
 	private function getCurrentUrl() {
 
-		// When running from command line the REQUEST_URI is missing
+		// when running from command line the REQUEST_URI is missing
 		if (empty($_SERVER['REQUEST_URI']))
 			return '';
 

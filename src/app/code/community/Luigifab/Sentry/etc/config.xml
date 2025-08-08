@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated D/09/03/2025
+ * Updated L/28/07/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -20,7 +20,7 @@
 <config>
 	<modules>
 		<Luigifab_Sentry>
-			<version>3.0.1</version>
+			<version>3.0.3</version>
 		</Luigifab_Sentry>
 	</modules>
 	<global>

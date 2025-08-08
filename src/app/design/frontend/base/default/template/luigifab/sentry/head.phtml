@@ -1,7 +1,7 @@
 <?php
 /**
  * Created D/09/04/2023
- * Updated L/10/03/2025
+ * Updated L/28/07/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -21,7 +21,7 @@ if (Mage::getStoreConfigFlag('dev/sentry/active') && !empty($dsn = Mage::getStor
 	$object = $this->helper('core')->isModuleEnabled('Luigifab_Minifier') ? Mage::getDesign() : $this;
 	$tunnel = Mage::getStoreConfig('dev/sentry/tunnel_js_front');
 	// https://docs.sentry.io/platforms/javascript/install/loader/ => doc js/sentry/loader.min.js
-	// https://browser.sentry-cdn.com/9.10.1/bundle.min.js => js/sentry/sdk.min.js
+	// https://browser.sentry-cdn.com/9.43.0/bundle.min.js => js/sentry/sdk.min.js
 	$id = explode('//', $dsn);
 	$id = explode('@', $id[1]);
 	$id = $id[0];

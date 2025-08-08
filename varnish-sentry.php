@@ -1,7 +1,7 @@
 <?php
 /**
  * Created M/20/12/2022
- * Updated D/09/03/2025
+ * Updated L/28/07/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -308,7 +308,6 @@ class Client {
 			$options['tags']['runtime'] = 'PHP '.PHP_VERSION;
 
 		$this->_serverUrl = sprintf('%s://%s%s/api/%s/store/', $scheme, $netloc, $path, $project);
-		//$this->_serverUrl = sprintf('%s://%s%s/api/store/', $scheme, $netloc, $path); // not working anymore
 		$this->_secretKey = (string) $password;
 		$this->_publicKey = (string) $username;
 		$this->_project   = (int) $project;
@@ -358,7 +357,7 @@ class Client {
 
 		if ((!$stack && $this->_logStacks) || ($stack === true)) {
 			$stack = debug_backtrace();
-			// Drop last stack
+			// drop last stack
 			array_shift($stack);
 		}
 
@@ -491,7 +490,7 @@ class Client {
 
 	private function getCurrentUrl() {
 
-		// When running from command line the REQUEST_URI is missing
+		// when running from command line the REQUEST_URI is missing
 		if (empty($_SERVER['REQUEST_URI']))
 			return '';
 
