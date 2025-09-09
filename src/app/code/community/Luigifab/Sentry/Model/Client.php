@@ -1,7 +1,7 @@
 <?php
 /**
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated L/28/07/2025
+ * Updated V/22/08/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -75,6 +75,8 @@ class Luigifab_Sentry_Model_Client {
 			// here there are no problems
 			$this->_oldErrorHandler = set_error_handler([$this, 'handleError'], error_reporting());
 		}
+
+		return $isActive;
 	}
 
 	// set_exception_handler
@@ -135,6 +137,7 @@ class Luigifab_Sentry_Model_Client {
 
 		// auto_log_stacks, name, tags
 		$options = [];
+		$options['tags']['engine'] = 'OpenMage '.Mage::getOpenMageVersion();
 
 		try {
 			$isEnabled = Mage::getStoreConfigFlag('dev/sentry/active');
@@ -244,7 +247,7 @@ class Luigifab_Sentry_Model_Client {
 			$message = '<unknown exception>';
 
 		// Sentry levels: debug, info, warning, error, fatal
-		// PHP level => [Sentry level, OpenMage label from mageCoreErrorHandler]
+		// PHP level => [Sentry level, OpenMage/Maho label from mageCoreErrorHandler]
 		$levels = [
 			E_ERROR             => ['error',   'Error'],
 			E_WARNING           => ['warning', 'Warning'],
@@ -330,9 +333,6 @@ class Luigifab_Sentry_Model_Client {
 		if (empty($options['tags']['runtime']))
 			$options['tags']['runtime'] = 'PHP '.PHP_VERSION;
 
-		if (empty($options['tags']['engine']))
-			$options['tags']['engine'] = 'OpenMage '.Mage::getOpenMageVersion();
-
 		$this->_serverUrl = sprintf('%s://%s%s/api/%s/store/', $scheme, $netloc, $path, $project);
 		$this->_secretKey = (string) $password;
 		$this->_publicKey = (string) $username;
@@ -340,13 +340,15 @@ class Luigifab_Sentry_Model_Client {
 		$this->_logStacks = (bool) ($options['auto_log_stacks'] ?? false);
 		$this->_name      = (string) (empty($options['name']) ? gethostname() : $options['name']);
 		$this->_tags      = $options['tags'];
+
+		return $this;
 	}
 
  	private function capture($data, $stack, $tags = []) {
 
 		//echo '<pre>'; debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS); exit;
 		if ($this->initSentry() !== true)
-			return true;
+			return false;
 
 		if (!isset($data['logger']))
 			$data['logger'] = $this->_defaultLogger;

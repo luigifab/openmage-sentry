@@ -38,7 +38,14 @@ Required
 - before updating the module, unapply openmage.diff and errors.diff, update the module, then apply openmage.diff and errors.diff
 
 
-File: /js/sentry/sdk.min.js
+Notes
+- For the simple connector: https://github.com/luigifab/sentry
+- For the Maho module: https://github.com/luigifab/maho-sentry
+- For the OpenMage module: https://github.com/luigifab/openmage-sentry
+- For the Dolibarr module: https://github.com/luigifab/dolibarr-sentry
+
+
+File: /js/sentry/sdk.min.js /js/sentry/loader.min.js
 Source: https://github.com/getsentry/sentry-javascript (https://browser.sentry-cdn.com/x.y.z/bundle.min.js)
 Copyright: 2019-2025 Sentry (https://sentry.io/) and individual contributors
 License: MIT (https://opensource.org/licenses/mit)

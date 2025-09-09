@@ -1,7 +1,7 @@
 <?php
 /**
  * Created J/08/12/2022
- * Updated J/02/11/2023
+ * Updated D/07/09/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -29,6 +29,6 @@ class Luigifab_Sentry_Block_Test extends Mage_Adminhtml_Block_System_Config_Form
 		if (str_contains($element->getHtmlId(), 'php'))
 			return sprintf('<input type="checkbox" name="%s" id="%s" />', $element->getHtmlId(), $element->getHtmlId());
 
-		return sprintf('<button type="button" name="%s" id="%s" onclick="test();">Test</button>', $element->getHtmlId(), $element->getHtmlId());
+		return sprintf('<button type="button" name="%s" id="%s" onclick="try { aFunctionThatMightFail(); } catch (err) { alert(\'Test sent to Sentry, eventId: \' + Sentry.captureException(err)); }">Test JS</button>', $element->getHtmlId(), $element->getHtmlId());
 	}
 }

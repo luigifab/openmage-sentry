@@ -1,7 +1,7 @@
 {
     "type": "magento-module",
     "name": "luigifab/openmage-sentry",
-    "description": "Updated version of Sentry connector for OpenMage.",
+    "description": "Updated version of Sentry connector for OpenMage (from Raven).",
     "keywords": ["openmage", "openmage-module"],
     "homepage": "https://github.com/luigifab/openmage-sentry",
     "license": "OSL-3.0",
@@ -16,6 +16,10 @@
             "email": "code@luigifab.fr"
         }
     ],
+    "support": {
+        "issues": "https://github.com/luigifab/openmage-sentry/issues",
+        "docs": "https://www.luigifab.fr/openmage/sentry"
+    },
     "require": {
         "php": ">=7.2.0",
         "openmage/magento-lts": ">=19.4.0 || main-dev || next-dev",

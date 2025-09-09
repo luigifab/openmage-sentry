@@ -1,9 +1,8 @@
 <?php
 /**
  * Created M/20/12/2022
- * Updated L/28/07/2025
+ * Updated V/22/08/2025
  *
- * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
  * https://github.com/luigifab/openmage-sentry
@@ -31,7 +30,7 @@ $cmd = 'varnishlog -q "RespStatus >= 400 or BerespStatus >= 400"';
 $dsn = $argv[1] ?? $_SERVER['SENTRY_DSN'] ?? 'empty';
 
 $sentry = new Client();
-$sentry->parseDSN($dsn, []);
+$sentry->parseDSN($dsn, ['tags' => ['engine' => 'varnish']]);
 
 global $headers; // getallheaders
 $headers = [];
@@ -221,7 +220,7 @@ class Client {
 			$message = '<unknown exception>';
 
 		// Sentry levels: debug, info, warning, error, fatal
-		// PHP level => [Sentry level, OpenMage label from mageCoreErrorHandler]
+		// PHP level => [Sentry level, OpenMage/Maho label from mageCoreErrorHandler]
 		$levels = [
 			E_ERROR             => ['error',   'Error'],
 			E_WARNING           => ['warning', 'Warning'],
@@ -314,13 +313,15 @@ class Client {
 		$this->_logStacks = (bool) ($options['auto_log_stacks'] ?? false);
 		$this->_name      = (string) (empty($options['name']) ? gethostname() : $options['name']);
 		$this->_tags      = $options['tags'];
+
+		return $this;
 	}
 
  	private function capture($data, $stack, $tags = []) {
 
 		//echo '<pre>'; debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS); exit;
 		if ($this->initSentry() !== true)
-			return true;
+			return false;
 
 		if (!isset($data['logger']))
 			$data['logger'] = $this->_defaultLogger;
