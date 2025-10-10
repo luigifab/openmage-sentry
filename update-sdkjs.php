@@ -1,7 +1,7 @@
 <?php
 /**
  * Created J/02/11/2023
- * Updated S/06/09/2025
+ * Updated L/06/10/2025
  *
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
@@ -39,13 +39,14 @@ function sendRequest(string $url) {
 
 	$result = curl_exec($ch);
 	$result = (($result === false) || (curl_errno($ch) !== 0)) ? trim('CURL_ERROR '.curl_errno($ch).' '.curl_error($ch)) : $result;
-	curl_close($ch);
+	if (PHP_VERSION_ID < 80000)
+		curl_close($ch);
 
 	return $result;
 }
 
 // @see https://github.com/getsentry/sentry-javascript
-// https://browser.sentry-cdn.com/10.10.0/bundle.min.js => js/sentry/sdk.min.js
+// https://browser.sentry-cdn.com/10.17.0/bundle.min.js => js/sentry/sdk.min.js
 $results = sendRequest('https://api.github.com/repos/getsentry/sentry-javascript/releases');
 if (mb_strpos($results, '"tag_name": "') !== false) {
 

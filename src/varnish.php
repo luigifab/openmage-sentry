@@ -1,7 +1,7 @@
 <?php
 /**
  * Created M/20/12/2022
- * Updated V/22/08/2025
+ * Updated L/06/10/2025
  *
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
  * Copyright 2022-2023 | Fabrice Creuzot <fabrice~cellublue~com>
@@ -447,8 +447,10 @@ class Client {
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // yes
 		curl_exec($curl);
 		$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		curl_close($curl);
+		if (PHP_VERSION_ID < 80000)
+			curl_close($curl);
 
+		// @todo log fault
 		return $code == 200;
 	}
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * Forked from https://github.com/getsentry/magento-amg-sentry-extension
- * Updated V/22/08/2025
+ * Updated L/06/10/2025
  *
  * Copyright 2012      | Jean Roussel <contact~jean-roussel~fr>
  * Copyright 2022-2025 | Fabrice Creuzot (luigifab) <code~luigifab~fr>
@@ -474,8 +474,10 @@ class Luigifab_Sentry_Model_Client {
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // yes
 		curl_exec($curl);
 		$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		curl_close($curl);
+		if (PHP_VERSION_ID < 80000)
+			curl_close($curl);
 
+		// @todo log fault
 		return $code == 200;
 	}
 
